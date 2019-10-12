@@ -9,6 +9,19 @@
 
 library(shiny)
 
+
+
+data <- read_csv("data.csv") %>%
+    tidy()
+data <- data %>%
+    mutate(dateTime = ymd_hms(CreatedDate),
+           Year = year(dateTime),
+           Month = month(dateTime),
+           Day = day(dateTime),
+           Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+    select(-dateTime, -Day, -Month, -Year) %>%
+    select(Date, everything())
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -18,11 +31,9 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+            checkboxInput("tag",
+                        "Which tags you want",
+                        choices = c())
         ),
 
         # Show a plot of the generated distribution
