@@ -11,16 +11,16 @@ library(shiny)
 
 
 
-data <- read_csv("data.csv") %>%
-    tidy()
-data <- data %>%
-    mutate(dateTime = ymd_hms(CreatedDate),
-           Year = year(dateTime),
-           Month = month(dateTime),
-           Day = day(dateTime),
-           Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
-    select(-dateTime, -Day, -Month, -Year) %>%
-    select(Date, everything())
+# data <- read_csv("data.csv") %>%
+#     tidy()
+# data <- data %>%
+#     mutate(dateTime = ymd_hms(CreatedDate),
+#            Year = year(dateTime),
+#            Month = month(dateTime),
+#            Day = day(dateTime),
+#            Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+#     select(-dateTime, -Day, -Month, -Year) %>%
+#     select(Date, everything())
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -31,9 +31,15 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            checkboxInput("tag",
-                        "Which tags you want",
-                        choices = c())
+            checkboxGroupInput(inputId = "tag",
+                        label = "Which tags you want",
+                        choices = c("Events", "PublicSector",    "Healthcare",      "Land",           
+                                    "Legal" ,          "SpecialPurpose",  "MixedUse",        "Company",        
+                                    "Investment",      "Hospitality",     "People",          "Finance",        
+                                    "Analytics",       "CompaniesPeople", "Lease",           "Retail",         
+                                    "Industrial",      "Development",     "Multifamily",     "Sale",           
+                                    "Office",          "National") ,
+                        selected = "Events")
         ),
 
         # Show a plot of the generated distribution
