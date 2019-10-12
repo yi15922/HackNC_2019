@@ -181,15 +181,11 @@ tagPop %>%
 
 
 
-
 ```{r edit tags}
 data %>%
   filter(is.numeric(vars)) %>%
   summarize_if(is.numeric(.), tot = sum(.))
 ```
-
-
-
 
 
 

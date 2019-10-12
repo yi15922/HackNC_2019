@@ -1,0 +1,208 @@
+---
+title: "data dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    social: menu
+runtime: shiny
+---
+
+```{r load-packages, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(tidyverse)
+library(DT)
+```
+
+
+```{r load-data, include = FALSE}
+nfl_draft <- read_csv("data/nfl_draft.csv") %>%
+  select(-X33) %>%
+  filter(is.na(Player_Id) == FALSE)
+```
+
+```{r save-fields, include = FALSE}
+min_year  <- 1985
+max_year  <- 2015
+n_tot_years <- (max_year - min_year) + 1
+draft_round <- nfl_draft %>% distinct(Rnd) %>% arrange(Rnd) %>% filter(!is.na(Rnd)) %>% pull(Rnd)
+```
+Sidebar {.sidebar}
+=======================================================================
+
+### NFL Draft Statistics
+
+```{r-filter-data}
+hr()
+
+sliderInput(inputId = "Year", label = "Year drafted",
+            min = min_year, max = max_year,
+            value = c(2001, max_year), step = 1, sep = "")
+
+hr()
+
+checkboxGroupInput(inputId = "draft_round", label = "Draft Round",
+                   choices = draft_round, 
+                   selected = c(1, 2, 3)
+                   )
+
+hr()
+
+x_var <- reactive({ syms(input$x) })
+y_var <- reactive({ syms(input$y) })
+
+sel_data <- reactive({
+  nfl_draft %>%
+    dplyr::filter(
+      between(Year, input$Year[1], input$Year[2]),
+      Rnd %in% input$draft_round
+      ) %>%
+    dplyr::filter(!is.na( !!!x_var() ), !is.na( !!!y_var() ))
+})
+```
+
+
+Dashboard
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### Percentage of players with data on selected variables {.value-box}
+
+```{r}
+renderGauge({
+  
+  n_sel_player <- nfl_draft %>%
+    dplyr::filter(Rnd %in% input$draft_round) %>%
+    distinct(Player_Id) %>%
+    nrow()
+
+  p <- round( nrow(sel_data()) / n_sel_player * 100, 0)
+  
+  gauge(p, min = 0, max = 100, symbol = "%", 
+        gaugeSectors(success = c(80, 100), warning = c(40, 79), 
+                     danger = c(0, 39)))
+})
+```
+
+### Average career approximate value {.value-box}
+
+```{r-avg-carAV}
+renderValueBox({
+  valueBox(value = round(mean(sel_data()$CarAV, na.rm = TRUE), 2), 
+           icon = "glyphicon-hand-up")
+})
+```
+
+### Average age of players {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(value = round(mean(sel_data()$Age, na.rm = TRUE), 2), 
+           icon = "glyphicon-hourglass")
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Variable choices {data-width=340}
+
+```{r-choose-variables}
+selectInput(
+  inputId = "x", label = "X-axis",
+  choices = c(
+    "Career Approximate Value" = "CarAV", 
+    "Approximate Value for First 4 Years" = "First4AV",
+    "Age at Time of Draft" = "Age",
+    "Number of Years as Starter" = "St",
+    "Number of All-Pro Selections" = "AP1",
+    "Number of Pro Bowl Selections" = "PB",
+    "Games Played" = "G"
+    ),
+  selected = "CarAV"
+  )
+
+selectInput(
+  inputId = "y", label = "Y-axis",
+  choices = c(
+    "Career Approximate Value" = "CarAV",
+    "Approximate Value for First 4 Years" = "First4AV",
+    "Age at Time of Draft" = "Age",
+    "Number of Years as Starter" = "St",
+    "Number of All-Pro Selections" = "AP1",
+    "Number of Pro Bowl Selections" = "PB",
+    "Games Played" = "G"
+    ),
+  selected = "G"
+  )
+
+xlab <- reactive({
+  case_when(
+    input$x == "CarAV" ~  
+      "Career Approximate Value",
+    input$x == "First4AV"        ~  
+      "Approximate Value for First 4 Years",
+    input$x == "Age"              ~ 
+      "Age at Time of Draft",
+    input$x == "St"       ~ 
+      "Number of Years as Starter",
+    input$x == "AP1"       ~ 
+      "Number of All-Pro Selections",
+    input$x == "PB"           ~ 
+      "Number of Pro Bowl Selections",
+    input$x == "G"          ~ 
+      "Games Played"
+  )
+})
+
+ylab <- reactive({
+  case_when(
+    input$y == "CarAV" ~  
+      "Career Approximate Value",
+    input$y == "First4AV"        ~  
+      "Approximate Value for First 4 Years",
+    input$y == "Age"              ~ 
+      "Age at Time of Draft",
+    input$y == "St"       ~ 
+      "Number of Years as Starter",
+    input$y == "AP1"       ~ 
+      "Number of All-Pro Selections",
+    input$y == "PB"           ~ 
+      "Number of Pro Bowl Selections",
+    input$y == "G"          ~ 
+      "Games Played"
+  )
+})
+
+br()
+```
+
+### Visualization {data-width=700}
+
+```{r}
+renderPlot({
+  ggplot(data = sel_data(),
+         mapping = aes_string(x = input$x, y = input$y, color = "Rnd")) +
+  geom_point(size = 2, alpha = 0.8) +
+  theme_minimal() +
+  labs(x = xlab(), y = ylab(), color = "Draft Round")
+  })
+```
+
+Data
+=======================================================================
+
+### About the data
+
+This [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) uses data 
+from [Pro Football Reference](http://www.pro-football-reference.com/).
+
+The data used in the analysis is shown below.
+
+```{r-data-table}
+DT::renderDataTable({
+  datatable( sel_data() )
+})
+```
