@@ -115,8 +115,7 @@ dataUSA %>%
 
 ```{r gether-data}
 gatheredData <- data %>%
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") %>%
-  mutate_all(str_replace(.,"Tag_", ""))
+  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
 ```
 
 ```{r tags}
@@ -129,11 +128,18 @@ allTags %>%
   filter(StoryID == 184098 & hasTag == 1) %>%
   select(Title, tags)
 
+# creates a dataframe with story titles and their tag counts
 tagCounts <- allTags %>%
   group_by(StoryID) %>%
   count(hasTag == 1) %>%
   select(StoryID, n) %>%
   rename(numTags = n)
+
+toDelete <- seq(1, nrow(tagCounts), 2)
+
+toDelete
+
+tagCounts <- tagCounts[-toDelete, ]
 
 data <- data %>%
   full_join(tagCounts)
