@@ -16,6 +16,10 @@ library(dplyr)
 library(lubridate)
 library(stringr)
 library(tidytext)
+library(textdata)
+
+data(stop_words)
+afinn <- get_sentiments("afinn")
 ```
 
 ```{r import-data}
@@ -54,6 +58,32 @@ smallData <- data %>%
 
 ```{r}
 textSmallData <- smallData %>%
-  select(Date, Title)
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title)
+
+textSmallData %>%
+  count(word, sort = TRUE)
 ```
+
+
+```{r}
+textData <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  anti_join(stop_words) %>%
+  inner_join(afinn)
+  
+
+textData %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 50) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+
+
 
