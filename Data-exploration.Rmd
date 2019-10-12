@@ -122,7 +122,7 @@ gatheredData <- data %>%
   pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
 ```
 
-```{r tags}
+```{r tags_data}
 # condenses tags into one tags column and their boolean into hasTag
 allTags <- gather(data, "tags", "hasTag", 13:35) 
 allTags <- allTags[order(allTags$StoryID),]
@@ -145,13 +145,21 @@ tagCounts <- tagCounts[-toDelete, ]
 
 data <- data %>%
   full_join(tagCounts)
+```
 
+
+
+```{r tags_plots, fig.width=5}
+# correlating number of tags with hit count
 data %>%
   select(Hits, numTags) %>%
   ggplot(aes(numTags)) + 
-  geom_bar() + 
-  scale_x_continuous(name = "Number of tags", breaks = seq(0, 8, 1))+
-  scale_y_continuous(name = "Hit count")
+  geom_bar(fill = "Blue") + 
+  scale_x_continuous(name = "Number of tags", breaks = seq(0, 8, 1)) +
+  scale_y_continuous(name = "Hit count") + 
+  theme_minimal() + 
+  labs(title = "Number of Tags Correlated with Hit Count")
+
 
 
 
@@ -176,7 +184,11 @@ tagPop %>%
   arrange(desc(total)) %>%
   slice(0:10) %>%
   ggplot(aes(x = reorder(tags, -total), y = total)) +
-  geom_col()
+  geom_col(fill = "Blue") + 
+  scale_x_discrete(name = "Top 10 tags") +
+  scale_y_continuous(name = "# of stories with tag") + 
+  theme_minimal() + 
+  labs(title = "Top 10 Most Popular Tags")
 
 ```
 
