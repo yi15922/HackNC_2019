@@ -17,6 +17,8 @@ library(lubridate)
 ```
 
 ```{r import-data}
-data <- read_csv("data.csv")
+data <- read_csv("data.csv") %>%
+  tidy()
+data
 ```
 
