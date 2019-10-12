@@ -68,7 +68,7 @@ textFreq <- data %>%
   count(word, sort = TRUE)
 
 textFreq %>%
-  filter(n>= 200) %>%
+  filter(n>= 100) %>%
   ggplot(aes(x = word, y = n)) +
     geom_col()
 ```
@@ -117,14 +117,7 @@ dataUSA %>%
 
 ```
 
-```{r gether-data}
-gatheredData <- data %>%
-<<<<<<< HEAD
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
-=======
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags")
->>>>>>> ea590c1cb161a0b0ea5ed6571455ea4735bbe6d4
-```
+
 
 ```{r tags}
 # condenses tags into one tags column and their boolean into hasTag
