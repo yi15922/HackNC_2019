@@ -50,13 +50,13 @@ data %>%
   geom_histogram(bins = 100)
 ```
 
-```{r }
+```{r small-data}
 smallData <- data %>%
   slice(1:20)
 ```
 
 
-```{r}
+```{r small-data-test}
 textSmallData <- smallData %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title)
@@ -66,7 +66,7 @@ textSmallData %>%
 ```
 
 
-```{r}
+```{r sentiment-begin}
 textData <- data %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
@@ -77,5 +77,11 @@ textData <- data %>%
 ```
 
 
-
+```{r hits}
+hitsSentData <- inner_join(data, textData) %>%
+  select(StoryID, Hits, tot)
+hitsSentData %>%
+  ggplot(aes(x = tot, y = Hits)) +
+  geom_point()
+```
 
