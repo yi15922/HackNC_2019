@@ -161,9 +161,21 @@ data %>%
 tagPop <- allTags %>%
   count(tags, hasTag) 
 
-tagPop %>%
+tagPop <- tagPop %>%
   filter(hasTag == 1) %>%
-  arrange(n)
+  arrange(n) %>%
+  select(tags, n) %>%
+  rename(total = n)
+
+tagPop <- mutate_if(tagPop, 
+                is.character, 
+                str_replace_all, pattern = "Tag_", replacement = "")
+
+tagPop %>%
+  arrange(desc(total)) %>%
+  slice(0:10) %>%
+  ggplot(aes(x = reorder(tags, -total), y = total)) +
+  geom_col()
 
 ```
 
