@@ -46,7 +46,7 @@ data_noNAs <- data %>%
 
 ```{r date-viz}
 data %>%
-  ggplot(aes(x = Date)) +
+  ggplot(aes(x = Date)) + 
   geom_histogram(bins = 100)
 ```
 
@@ -86,4 +86,17 @@ textData %>%
 
 
 
+
+
+
+```{r hits}
+dataUSA <- subset(data, Country_USA == 1)
+dataGBR <- subset(data, Country_GBR == 1)
+dataCAN <- subset(data, Country_CAN == 1)
+
+dataUSA %>%
+  select(Title, Hits)
+
+
+```
 
