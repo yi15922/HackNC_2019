@@ -39,8 +39,8 @@ ui <- fluidPage(
                                     "Analytics",       "CompaniesPeople", "Lease",           "Retail",         
                                     "Industrial",      "Development",     "Multifamily",     "Sale",           
                                     "Office",          "National") ,
-                        selected = "Events")
-        ),
+                        selected = "Events"),
+        
         checkboxGroupInput(inputId = "country",
                            label = "What country do you want",
                            choices = c("Canada", "US", "GB") ,
@@ -52,8 +52,8 @@ ui <- fluidPage(
            plotOutput("distPlot")
         )
     )
-)
 
+)
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
