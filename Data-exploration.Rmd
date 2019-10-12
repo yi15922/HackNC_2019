@@ -14,6 +14,8 @@ library(tidyverse)
 library(broom)
 library(dplyr)
 library(lubridate)
+library(stringr)
+library(tidytext)
 ```
 
 ```{r import-data}
@@ -33,4 +35,25 @@ data <- data %>%
   select(Date, everything())
 ```
 
+```{r drop-na}
+data_noNAs <- data %>%
+  drop_na()
+```
+
+```{r date-viz}
+data %>%
+  ggplot(aes(x = Date)) +
+  geom_histogram(bins = 100)
+```
+
+```{r }
+smallData <- data %>%
+  slice(1:20)
+```
+
+
+```{r}
+textSmallData <- smallData %>%
+  select(Date, Title)
+```
 

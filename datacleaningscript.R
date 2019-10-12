@@ -12,5 +12,4 @@ data <- data %>%
          Month = month(dateTime),
          Day = day(dateTime),
          Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date() %>%
-           select(data$Date, everything())
-
+           select(data$Date, everything()))
