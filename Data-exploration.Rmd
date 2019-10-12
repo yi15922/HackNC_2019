@@ -7,4 +7,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Yay
+```{r import-libraries}
+library(tidyverse)
+library(broom)
+library(dplyr)
+library(lubridate)
+```
+
