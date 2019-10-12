@@ -111,11 +111,7 @@ dataUSA %>%
 
 ```{r gether-data}
 gatheredData <- data %>%
-<<<<<<< HEAD
   pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
-=======
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags")
->>>>>>> ea590c1cb161a0b0ea5ed6571455ea4735bbe6d4
 ```
 
 ```{r tags}
@@ -135,10 +131,8 @@ tagCounts <- allTags %>%
   select(StoryID, n) %>%
   rename(numTags = n)
 
+# previous operation returns both true and false, removing all FALSE
 toDelete <- seq(1, nrow(tagCounts), 2)
-
-toDelete
-
 tagCounts <- tagCounts[-toDelete, ]
 
 data <- data %>%
