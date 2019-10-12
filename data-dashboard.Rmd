@@ -15,17 +15,20 @@ library(DT)
 ```
 
 
-```{r load-data, include = FALSE}
-nfl_draft <- read_csv("data/nfl_draft.csv") %>%
-  select(-X33) %>%
-  filter(is.na(Player_Id) == FALSE)
+```{r import-data}
+data <- read_csv("data.csv") %>%
+  tidy()
 ```
 
-```{r save-fields, include = FALSE}
-min_year  <- 1985
-max_year  <- 2015
-n_tot_years <- (max_year - min_year) + 1
-draft_round <- nfl_draft %>% distinct(Rnd) %>% arrange(Rnd) %>% filter(!is.na(Rnd)) %>% pull(Rnd)
+```{r lubridate}
+data <- data %>%
+  mutate(dateTime = ymd_hms(CreatedDate),
+         Year = year(dateTime),
+         Month = month(dateTime),
+         Day = day(dateTime),
+         Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+  select(-dateTime, -Day, -Month, -Year) %>%
+  select(Date, everything())
 ```
 Sidebar {.sidebar}
 =======================================================================
@@ -111,7 +114,7 @@ Row
 
 ```{r-choose-variables}
 selectInput(
-  inputId = "x", label = "X-axis",
+  inputId = "tag", label = "Tags to see",
   choices = c(
     "Career Approximate Value" = "CarAV", 
     "Approximate Value for First 4 Years" = "First4AV",
