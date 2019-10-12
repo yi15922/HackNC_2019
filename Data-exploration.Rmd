@@ -87,7 +87,7 @@ hitsSentData %>%
 
 
 
-```{r hits}
+```{r countrySplit}
 dataUSA <- subset(data, Country_USA == 1)
 dataGBR <- subset(data, Country_GBR == 1)
 dataCAN <- subset(data, Country_CAN == 1)
@@ -95,6 +95,25 @@ dataCAN <- subset(data, Country_CAN == 1)
 dataUSA %>%
   select(Title, Hits)
 
-
 ```
 
+```{r tags}
+# condenses tags into one tags column and their boolean into hasTag
+allTags <- gather(data, "tags", "hasTag", 13:35) 
+allTags <- allTags[order(allTags$StoryID),]
+
+# to find all tags associated with an article, filter for hasTag is true
+allTags %>%
+  filter(StoryID == 184098 & hasTag == 1) %>%
+  select(Title, tags)
+
+tagCounts <- allTags %>%
+  group_by(StoryID) %>%
+  count(hasTag == 1) %>%
+  select(StoryID, n) %>%
+  rename(numTags = n)
+
+data <- data %>%
+  full_join(tagCounts)
+
+```
