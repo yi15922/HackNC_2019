@@ -39,7 +39,7 @@ data <- data %>%
          Month = month(dateTime),
          Day = day(dateTime),
          Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
-  select(-dateTime, -Day, -Month, -Year, -day, -month, -year, -date, -time) %>%
+  select(-dateTime, -Day, -Month, -Year) %>%
   select(Date, everything())
 ```
 
@@ -61,8 +61,16 @@ textSmallData <- smallData %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title)
 
-textSmallData %>%
+textFreq <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  anti_join(stop_words) %>%
   count(word, sort = TRUE)
+
+textFreq %>%
+  filter(n>= 200) %>%
+  ggplot(aes(x = word, y = n)) +
+    geom_col()
 ```
 
 
