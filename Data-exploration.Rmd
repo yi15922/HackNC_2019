@@ -96,13 +96,13 @@ textData <- data %>%
 
 
 ```{r hits}
-# hitsSentData <- full_join(data, textData) %>%
-#   select(StoryID, Hits, meanSent) %>%
-#   drop_na()
-# 
-# hitsSentData %>%
-#   ggplot(aes(x = meanSent, y = Hits)) +
-#   geom_point()
+hitsSentData <- full_join(data, textData) %>%
+  select(StoryID, Hits, meanSent) %>%
+  drop_na()
+
+hitsSentData %>%
+  ggplot(aes(x = meanSent, y = Hits)) +
+  geom_point()
 ```
 
 
@@ -161,13 +161,32 @@ data %>%
 tagPop <- allTags %>%
   count(tags, hasTag) 
 
-tagPop %>%
+tagPop <- tagPop %>%
   filter(hasTag == 1) %>%
-  arrange(n)
+  arrange(n) %>%
+  select(tags, n) %>%
+  rename(total = n)
+
+tagPop <- mutate_if(tagPop, 
+                is.character, 
+                str_replace_all, pattern = "Tag_", replacement = "")
+
+
+tagPop %>%
+  arrange(desc(total)) %>%
+  slice(0:10) %>%
+  ggplot(aes(x = reorder(tags, -total), y = total)) +
+  geom_col()
 
 ```
 
 
+
+```{r edit tags}
+data %>%
+  filter(is.numeric(vars)) %>%
+  summarize_if(is.numeric(.), tot = sum(.))
+```
 
 
 
@@ -179,13 +198,6 @@ first_model <- lm(Hits ~ data1$numTags + Date + AuthorID + Country_USA + Country
 
 tidy(first_model)
 glance(first_model)
-```
-
-
-```{r}
-tagPop %>%
-  select(tags) %>%
-  pull()
 ```
 
 
