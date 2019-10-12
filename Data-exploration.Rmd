@@ -16,4 +16,7 @@ library(dplyr)
 library(lubridate)
 ```
 
-Hello world! 
+```{r import-data}
+data <- read_csv("data.csv")
+```
+
