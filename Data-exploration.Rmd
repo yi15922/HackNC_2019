@@ -71,17 +71,9 @@ textData <- data %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
   anti_join(stop_words) %>%
-  inner_join(afinn)
-  
-
-textData %>%
-  count(word, sort = TRUE) %>%
-  filter(n > 50) %>%
-  mutate(word = reorder(word, n)) %>%
-  ggplot(aes(word, n)) +
-  geom_col() +
-  xlab(NULL) +
-  coord_flip()
+  inner_join(afinn) %>%
+  group_by(StoryID) %>%
+  summarize(tot = sum(value))
 ```
 
 
