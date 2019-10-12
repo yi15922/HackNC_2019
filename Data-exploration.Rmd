@@ -96,13 +96,13 @@ textData <- data %>%
 
 
 ```{r hits}
-hitsSentData <- full_join(data, textData) %>%
-  select(StoryID, Hits, meanSent) %>%
-  drop_na()
-
-hitsSentData %>%
-  ggplot(aes(x = meanSent, y = Hits)) +
-  geom_point()
+# hitsSentData <- full_join(data, textData) %>%
+#   select(StoryID, Hits, meanSent) %>%
+#   drop_na()
+# 
+# hitsSentData %>%
+#   ggplot(aes(x = meanSent, y = Hits)) +
+#   geom_point()
 ```
 
 
@@ -181,15 +181,6 @@ tagPop %>%
 ```
 
 
-
-```{r edit tags}
-data %>%
-  filter(is.numeric(vars)) %>%
-  summarize_if(is.numeric(.), tot = sum(.))
-```
-
-
-
 ```{r model}
 data1 <- data %>%
   drop_na()
@@ -201,4 +192,9 @@ glance(first_model)
 ```
 
 
+```{r tagpop-pull}
+tagPop %>%
+  select(tags) %>%
+  pull()
+```
 
