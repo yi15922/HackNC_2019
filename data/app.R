@@ -41,6 +41,11 @@ ui <- fluidPage(
                                     "Office",          "National") ,
                         selected = "Events")
         ),
+        checkboxGroupInput(inputId = "country",
+                           label = "What country do you want",
+                           choices = c("Canada", "US", "GB") ,
+                           selected = "US")
+    ),
 
         # Show a plot of the generated distribution
         mainPanel(
