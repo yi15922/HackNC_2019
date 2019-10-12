@@ -88,10 +88,10 @@ bing <- bing %>%
 textData <- data %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
-  inner_join(afinn) %>%
-  group_by(StoryID) %>%
-  summarize(meanSent = mean(value),
-            tot_words = n())
+  inner_join(nrc) # %>%
+  # group_by(StoryID) %>%
+  # summarize(meanSent = mean(value),
+  #           tot_words = n())
 ```
 
 
@@ -146,3 +146,30 @@ data <- data %>%
   full_join(tagCounts)
 
 ```
+
+
+
+
+```{r edit tags}
+data %>%
+  filter(is.numeric(vars)) %>%
+  summarize_if(is.numeric(.), tot = sum(.))
+```
+
+
+
+
+
+
+```{r model}
+data1 <- data %>%
+  drop_na()
+
+first_model <- lm(Hits ~ data1$numTags + Date + AuthorID + Country_USA + Country_CAN + Country_GBR + data1$Tag_None + data1$Tag_National + data1$Tag_Office + data1$Tag_Industrial + data1$Tag_Retail + data1$Tag_People + data1$Tag_Investment + data1$Tag_Analytics + data1$Tag_Development + data1$Tag_Finance + data1$Tag_Multifamily + data1$Tag_Hospitality + data1$Tag_Company + data1$Tag_Healthcare + data1$Tag_CompaniesPeople + data1$Tag_Lease + data1$Tag_Sale + data1$Tag_MixedUse + data1$Tag_SpecialPurpose, data = data1)
+
+tidy(first_model)
+glance(first_model)
+```
+
+
+
