@@ -117,7 +117,10 @@ dataUSA %>%
 
 ```
 
-
+```{r gether-data}
+gatheredData <- data %>%
+  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
+```
 
 ```{r tags}
 # condenses tags into one tags column and their boolean into hasTag
@@ -136,14 +139,18 @@ tagCounts <- allTags %>%
   select(StoryID, n) %>%
   rename(numTags = n)
 
+# previous operation returns both true and false, removing all FALSE
 toDelete <- seq(1, nrow(tagCounts), 2)
-
-toDelete
-
 tagCounts <- tagCounts[-toDelete, ]
 
 data <- data %>%
   full_join(tagCounts)
+
+data %>%
+  select(Hits, numTags) %>%
+  ggplot(aes(numTags)) + 
+  geom_bar() + 
+  scale_x_continuous(name = "Number of Tags", breaks = seq(0, 8, 1))
 
 ```
 
