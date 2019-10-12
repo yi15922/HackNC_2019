@@ -39,14 +39,10 @@ data <- data %>%
          Month = month(dateTime),
          Day = day(dateTime),
          Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
-  select(-dateTime, -Day, -Month, -Year) %>%
+  select(-dateTime, -Day, -Month, -Year, -day, -month, -year, -date, -time) %>%
   select(Date, everything())
 ```
 
-```{r drop-na}
-data_noNAs <- data %>%
-  drop_na()
-```
 
 ```{r date-viz}
 data %>%
@@ -115,8 +111,7 @@ dataUSA %>%
 
 ```{r gether-data}
 gatheredData <- data %>%
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") %>%
-  mutate_all(str_replace(.,"Tag_", ""))
+  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags")
 ```
 
 ```{r tags}
