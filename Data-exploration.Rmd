@@ -146,4 +146,10 @@ tagCounts <- tagCounts[-toDelete, ]
 data <- data %>%
   full_join(tagCounts)
 
+data %>%
+  select(Hits, numTags) %>%
+  ggplot(aes(numTags)) + 
+  geom_bar() + 
+  scale_x_continuous(name = "Number of Tags", breaks = seq(0, 8, 1))
+
 ```
