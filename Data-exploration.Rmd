@@ -19,6 +19,16 @@ library(lubridate)
 ```{r import-data}
 data <- read_csv("data.csv") %>%
   tidy()
-data
+```
+
+
+```{r lubridate}
+data <- data %>%
+  mutate(dateTime = ymd_hms(CreatedDate),
+         Year = year(dateTime),
+         Month = month(dateTime),
+         Day = day(dateTime),
+         Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+  select(-date, -time, -Year, -Month, -Day, -year, -month, -day)
 ```
 
