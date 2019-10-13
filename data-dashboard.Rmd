@@ -18,7 +18,7 @@ library(DT)
 ```{r import-data}
 data <- read_csv("data.csv") %>%
   tidy()
-```
+```ß
 
 ```{r lubridate}
 data <- data %>%
@@ -26,7 +26,7 @@ data <- data %>%
          Year = year(dateTime),
          Month = month(dateTime),
          Day = day(dateTime),
-         Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+         Date = paste(Year, Month, Day, col = "-") %>% ymd() %>% as.Date()) %>%
   select(-dateTime, -Day, -Month, -Year) %>%
   select(Date, everything())
 ```
