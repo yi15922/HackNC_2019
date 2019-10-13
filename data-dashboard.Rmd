@@ -44,7 +44,7 @@ data <- data %>%
 allTags <- gather(data, "tags", "hasTag", 13:35) 
 allTags <- allTags[order(allTags$StoryID),]
 
-# creates a dataframe with story titles and their tag counts
+# creates a dataframe with article titles and their tag counts
 tagCounts <- allTags %>%
   group_by(StoryID) %>%
   count(hasTag == 1) %>%
@@ -172,7 +172,7 @@ renderValueBox({
 
 ```
 
-### Average hits per story {.value-box}
+### Average hits per article {.value-box}
 
 ```{r avg-hitsPerStory}
 renderValueBox({
@@ -180,7 +180,7 @@ renderValueBox({
 })
 ```
 
-### Average number of tags per story {.value-box}
+### Average number of tags per article {.value-box}
 
 ```{r avg-tagsPerStory}
 renderValueBox({
@@ -227,7 +227,8 @@ renderPlot({
     slice(0:10) %>%
     ggplot(aes(x = reorder(word, -n), y = n)) +
     geom_col(fill = "dodgerblue") +
-    labs(x = "Words", y = "Frequency", title = "Most Frequently Occurring Words in Titles of Stories")
+    labs(x = "Words", y = "Frequency", title = "Most Frequently Occurring Words in Titles of Stories") + 
+    theme_minimal()
   })
 ```
 
