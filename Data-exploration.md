@@ -102,11 +102,11 @@ textFreq %>%
 Here we are sub-setting the data by countries.
 
 ``` r
-dataUSA <- subset(data, Country_USA == 1)
-dataGBR <- subset(data, Country_GBR == 1)
-dataCAN <- subset(data, Country_CAN == 1)
+US <- subset(data, Country_USA == 1)
+GB <- subset(data, Country_GBR == 1)
+Canada <- subset(data, Country_CAN == 1)
 
-dataUSA %>%
+US %>%
   select(Title, Hits)
 ```
 

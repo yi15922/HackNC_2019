@@ -99,16 +99,7 @@ textFreq %>%
   labs(x = "Words", y = "Frequency", title = "Most frequent words in Summaries")
 ```
 
-Here we are sub-setting the data by countries.
-```{r countrySplit}
-dataUSA <- subset(data, Country_USA == 1)
-dataGBR <- subset(data, Country_GBR == 1)
-dataCAN <- subset(data, Country_CAN == 1)
 
-dataUSA %>%
-  select(Title, Hits)
-
-```
 
 
 We decided to add up the number of tags each story had associated with it. 

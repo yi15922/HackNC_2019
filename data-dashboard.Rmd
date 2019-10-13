@@ -63,7 +63,7 @@ data <- data %>%
 Sidebar {.sidebar}
 =======================================================================
 
-### Story characteristics
+### Dataset Characteristics
 
 ```{r chooseTags}
 hr()
@@ -84,10 +84,10 @@ selectInput("tagSelected", "Choose a tag to search for:",
 ```{r chooseCountry}
 hr()
 
-checkboxGroupInput(inputId = "country",
+radioButtons(inputId = "country",
                          label = "Select countries:",
-                         choices = c("Canada", "US", "GB") ,
-                         selected = "US")
+                         choices = c("All", "Canada", "US", "GB") ,
+                         selected = "All")
 ```
 
 
@@ -102,17 +102,37 @@ sliderInput("TheDates",
                     timeFormat=("%Y-%m-%d"))
 ```
 
+```{r countrySplit}
+US <- subset(data, Country_USA == 1)
+GB <- subset(data, Country_GBR == 1)
+Canada <- subset(data, Country_CAN == 1)
 
+```
 
 ```{r makeReactive}
-hr()
+
+
 
 allTags <- allTags %>%
   filter(hasTag == 1)
 
+countryData <- reactive({
+  if (input$country == "All"){ 
+    data
+  } else if (input$country == "Canada"){ 
+    Canada
+  } else if (input$country == "US"){ 
+    US
+  } else if (input$country == "GB"){
+    GB
+  }
+})
+
+
+
 sel_data <- reactive({
   if (input$tagSelected == "All") { 
-    data %>%
+    countryData() %>%
     drop_na() %>%
     select(-Body) %>%
     filter(
@@ -120,16 +140,18 @@ sel_data <- reactive({
       )
     } else {
   allTags %>%
-      filter(tags == input$tagSelected) %>%
-        full_join(data) %>%
+        filter(tags == input$tagSelected) %>%
+        full_join(countryData()) %>%
         drop_na() %>%
-    select(-Body) %>%
-    filter(
-      between(Date, input$TheDates[1], input$TheDates[2])
-      )
-        
-    }
-})
+        select(-Body) %>%
+        filter(
+          between(Date, input$TheDates[1], input$TheDates[2])
+          )
+      } 
+  })
+
+
+
 ```
 
 
@@ -139,7 +161,15 @@ Dashboard
 Row
 -----------------------------------------------------------------------
 
-### Average number of hits per story {.value-box}
+### Stories found {.value-box}
+```{r totalStory}
+renderValueBox({
+  valueBox(value = count(sel_data()))
+})
+
+```
+
+### Average hits per story {.value-box}
 
 ```{r avg-hitsPerStory}
 renderValueBox({
@@ -155,13 +185,6 @@ renderValueBox({
 })
 ```
 
-### Total number of stories {.value-box}
-```{r totalStory}
-renderValueBox({
-  valueBox(value = count(sel_data()))
-})
-
-```
 
 Row
 -----------------------------------------------------------------------
@@ -170,7 +193,7 @@ Row
 
 ```{r plotDataReactive}
 plotData <- reactive({ 
-  sel_data()%>%
+  sel_data() %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
   anti_join(stop_words) %>%
