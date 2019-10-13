@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r import-libraries}
+```{r import-libraries, include=FALSE}
 library(tidyverse)
 library(broom)
 library(dplyr)
@@ -216,4 +216,24 @@ tagPop %>%
   select(tags) %>%
   pull()
 ```
+
+
+```{r adding-sentiment-analysis}
+textDataFreq <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  inner_join(nrc) %>%
+  group_by(sentiment) %>%
+  summarize(totSents = n()) %>%
+  arrange(desc(totSents))
+
+textDataFreq$sentiment <- factor(textDataFreq$sentiment, levels = textDataFreq$sentiment[order(desc((textDataFreq$totSents)))])
+
+textDataFreq %>%
+  ggplot(aes(x = sentiment, y = totSents)) +
+  geom_col()
+```
+
+
+
 
