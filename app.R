@@ -14,7 +14,8 @@ library(dplyr)
 library(lubridate)
 
 data <- read_csv("data.csv") %>%
-    tidy()
+    as.tibble()
+
 data <- data %>%
     mutate(dateTime = ymd_hms(CreatedDate),
            Year = year(dateTime),
@@ -22,7 +23,10 @@ data <- data %>%
            Day = day(dateTime),
            Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
     select(-dateTime, -Day, -Month, -Year) %>%
-    select(Date, everything())
+    select(Date, everything()) %>%
+    mutate(Title = as.character(Title), 
+       Summary = as.character(Summary),
+       Body = as.character(Body))
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
