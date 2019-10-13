@@ -3,51 +3,16 @@ Initial data exploration
 Margaret Reed, Daniel Hwang, Yi Chen
 Oct 12, 2019
 
-``` r
-library(tidyverse)
-```
-
-    ## ── Attaching packages ────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
-
-    ## ✔ ggplot2 3.2.1     ✔ purrr   0.3.2
-    ## ✔ tibble  2.1.3     ✔ dplyr   0.8.3
-    ## ✔ tidyr   1.0.0     ✔ stringr 1.4.0
-    ## ✔ readr   1.3.1     ✔ forcats 0.4.0
-
-    ## ── Conflicts ───────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-
-``` r
-library(broom)
-library(dplyr)
-library(lubridate)
-```
-
-    ## 
-    ## Attaching package: 'lubridate'
-
-    ## The following object is masked from 'package:base':
-    ## 
-    ##     date
-
-``` r
-library(stringr)
-library(tidytext)
-library(textdata)
-library(SnowballC)
-
-
-data(stop_words)
-afinn <- get_sentiments("afinn")
-bing <- get_sentiments("bing")
-nrc <- get_sentiments("nrc")
-```
+[About](./about.html) [Application](./app.html)
 
 ``` r
 data <- read.csv("data.csv") %>%
   as_tibble()
 ```
+
+We needed to clean the data a little. We did so by coding the date
+variable as a date using the lubridate package. We also did some
+reordering and converting of times for ease of analysis.
 
 ``` r
 data <- data %>%
@@ -63,24 +28,34 @@ data <- data %>%
          Body = as.character(Body))
 ```
 
+Here is our first exploratory visualization, looking at the distribution
+of the dates each story was created.
+
 ``` r
 data %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100)
+  geom_histogram(bins = 100) +
+  labs(x = "Date", y = "Number of stories", title = "Initial date distribution")
 ```
 
-![](Data-exploration_files/figure-gfm/date-viz-1.png)<!-- -->
+![](Data-exploration_files/figure-gfm/initial-date-viz-1.png)<!-- -->
+
+We decided we wanted to look more closely at the dates in the latter
+half of 2018.
 
 ``` r
-smallData <- data %>%
-  slice(1:20)
+data %>%
+  filter(Date >= "2018-06-01") %>%
+  ggplot(aes(x = Date)) +
+  geom_histogram(bins = 100) +
+  labs(x = "Date", y = "Number of stories", title = "Subset date distribution")
 ```
 
-``` r
-textSmallData <- smallData %>%
-  select(Date, Title, StoryID) %>%
-  unnest_tokens(word, Title)
+![](Data-exploration_files/figure-gfm/subset-date-viz-1.png)<!-- -->
 
+Here is a visualization of the most common words in the titles overall.
+
+``` r
 textFreq <- data %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
@@ -91,46 +66,42 @@ textFreq <- data %>%
     ## Joining, by = "word"
 
 ``` r
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+
 textFreq %>%
-  filter(n>= 100) %>%
+  filter(n>= 75) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col()
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
 ```
 
-![](Data-exploration_files/figure-gfm/small-data-test-1.png)<!-- -->
+![](Data-exploration_files/figure-gfm/word-freq-viz-1.png)<!-- -->
+
+Here is a visualization of the most common words in summaries overall.
 
 ``` r
-bing <- bing %>%
-  mutate(sentValue = case_when(
-    sentiment == "negative" ~ -1,
-    sentiment == "positive" ~ 1
-  ))
-```
-
-``` r
-textData <- data %>%
-  select(Date, Title, StoryID) %>%
-  unnest_tokens(word, Title) %>%
-  inner_join(nrc) # %>%
+textFreq <- data %>%
+  select(Date, Summary, StoryID) %>%
+  unnest_tokens(word, Summary) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE)
 ```
 
     ## Joining, by = "word"
 
 ``` r
-  # group_by(StoryID) %>%
-  # summarize(meanSent = mean(value),
-  #           tot_words = n())
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+
+textFreq %>%
+  filter(n>= 150) %>%
+  ggplot(aes(x = word, y = n)) +
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Summaries")
 ```
 
-``` r
-# hitsSentData <- full_join(data, textData) %>%
-#   select(StoryID, Hits, meanSent) %>%
-#   drop_na()
-# 
-# hitsSentData %>%
-#   ggplot(aes(x = meanSent, y = Hits)) +
-#   geom_point()
-```
+![](Data-exploration_files/figure-gfm/word-freq-sum-1.png)<!-- -->
+
+Here we are sub-setting the data by countries.
 
 ``` r
 dataUSA <- subset(data, Country_USA == 1)
@@ -156,10 +127,8 @@ dataUSA %>%
     ## 10 Denver Makes Shortlist for Amazon HQ2                                134
     ## # … with 1,241 more rows
 
-``` r
-gatheredData <- data %>%
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
-```
+We decided to add up the number of tags each story had associated with
+it.
 
 ``` r
 # condenses tags into one tags column and their boolean into hasTag
@@ -169,18 +138,18 @@ allTags <- allTags[order(allTags$StoryID),]
 # to find all tags associated with an article, filter for hasTag is true
 allTags %>%
   filter(StoryID == 184098 & hasTag == 1) %>%
-  select(Title, tags)
+  select(Title, Date, tags)
 ```
 
-    ## # A tibble: 6 x 2
-    ##   Title                                                     tags           
-    ##   <chr>                                                     <chr>          
-    ## 1 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_National   
-    ## 2 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_Office     
-    ## 3 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_Development
-    ## 4 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_Finance    
-    ## 5 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_Company    
-    ## 6 Hundreds of Localities Fortify Their Amazon HQ2 Bids wit… Tag_CompaniesP…
+    ## # A tibble: 6 x 3
+    ##   Title                                            Date       tags         
+    ##   <chr>                                            <date>     <chr>        
+    ## 1 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_National 
+    ## 2 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_Office   
+    ## 3 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_Developm…
+    ## 4 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_Finance  
+    ## 5 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_Company  
+    ## 6 Hundreds of Localities Fortify Their Amazon HQ2… 2017-10-26 Tag_Companie…
 
 ``` r
 # creates a dataframe with story titles and their tag counts
@@ -200,6 +169,9 @@ data <- data %>%
 
     ## Joining, by = "StoryID"
 
+Here is a plot of the number of tags associated with a story and how
+many hits it got.
+
 ``` r
 # correlating number of tags with hit count
 data %>%
@@ -214,9 +186,9 @@ data %>%
 
 ![](Data-exploration_files/figure-gfm/tags_plots-1.png)<!-- -->
 
-``` r
-# --------------------------------Now plotting by tag popularity
+We also decided to visualize the frequency of tags in general.
 
+``` r
 tagPop <- allTags %>%
   count(tags, hasTag) 
 
@@ -242,36 +214,10 @@ tagPop %>%
   labs(title = "Top 10 Most Popular Tags")
 ```
 
-![](Data-exploration_files/figure-gfm/tags_plots-2.png)<!-- -->
+![](Data-exploration_files/figure-gfm/tag-pop-viz-1.png)<!-- -->
 
-``` r
-data %>%
-  arrange(Date)
-```
-
-    ## # A tibble: 1,933 x 36
-    ##    Date       StoryID Title Summary Body   Hits AuthorID CreatedDate
-    ##    <date>       <int> <chr> <chr>   <chr> <int>    <int> <fct>      
-    ##  1 2016-03-31  146316 Para… Will O… Wash…     0      132 2016-03-31…
-    ##  2 2017-09-05  182305 Newm… Exclus… "New…    32      296 2017-09-05…
-    ##  3 2017-09-07  182389 Amaz… Tech G… "Ama…    71      240 2017-09-07…
-    ##  4 2017-09-28  183158 For … Bigges… "Whi…   601      240 2017-09-28…
-    ##  5 2017-10-19  183882 Last… Hundre… "Tod…  1379      240 2017-10-19…
-    ##  6 2017-10-26  184098 Hund… While … "<sp…  1623      240 2017-10-26…
-    ##  7 2017-12-04  185294 Impl… With E… "Sin…    27      157 2017-12-04…
-    ##  8 2017-12-08  194529 Colu… Surgin… "A r…     1       38 2017-12-08…
-    ##  9 2017-12-08  194530 "Rel… Roughl… "New…     0      113 2017-12-08…
-    ## 10 2017-12-13  194528 "Day… "Cycle… "Day…     0      312 2017-12-13…
-    ## # … with 1,923 more rows, and 28 more variables: Country_USA <int>,
-    ## #   Country_CAN <int>, Country_GBR <int>, Tag_None <int>,
-    ## #   Tag_National <int>, Tag_Office <int>, Tag_Industrial <int>,
-    ## #   Tag_Retail <int>, Tag_People <int>, Tag_Investment <int>,
-    ## #   Tag_Analytics <int>, Tag_Development <int>, Tag_Finance <int>,
-    ## #   Tag_Events <int>, Tag_Multifamily <int>, Tag_Hospitality <int>,
-    ## #   Tag_Company <int>, Tag_Healthcare <int>, Tag_Legal <int>,
-    ## #   Tag_Land <int>, Tag_Lease <int>, Tag_Sale <int>, Tag_MixedUse <int>,
-    ## #   Tag_SpecialPurpose <int>, Tag_PublicSector <int>,
-    ## #   Tag_CompaniesPeople <int>, Tag_CoStarGreenReport <int>, numTags <int>
+Here is a very basic multivariate linear regression model just for
+fun:’)
 
 ``` r
 data1 <- data %>%
@@ -307,17 +253,27 @@ glance(first_model)
     ## 1     0.475         0.469  242.      72.0 2.49e-246    25 -13344. 26740.
     ## # … with 3 more variables: BIC <dbl>, deviance <dbl>, df.residual <int>
 
+Here we also did a little sentiment analysis for fun :’’)
+
 ``` r
-tagPop %>%
-  select(tags) %>%
-  pull()
+textDataFreq <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  inner_join(nrc) %>%
+  group_by(sentiment) %>%
+  summarize(totSents = n()) %>%
+  arrange(desc(totSents))
 ```
 
-    ##  [1] "Events"          "PublicSector"    "Healthcare"     
-    ##  [4] "Land"            "Legal"           "SpecialPurpose" 
-    ##  [7] "MixedUse"        "Company"         "Investment"     
-    ## [10] "Hospitality"     "People"          "Finance"        
-    ## [13] "Analytics"       "CompaniesPeople" "Lease"          
-    ## [16] "Retail"          "Industrial"      "Development"    
-    ## [19] "Multifamily"     "Sale"            "Office"         
-    ## [22] "National"
+    ## Joining, by = "word"
+
+``` r
+textDataFreq$sentiment <- factor(textDataFreq$sentiment, levels = textDataFreq$sentiment[order(desc((textDataFreq$totSents)))])
+
+textDataFreq %>%
+  ggplot(aes(x = sentiment, y = totSents)) +
+  geom_col() + 
+  labs(x = "sentiment", y = "frequency", title = "Frequency of sentiments associated with words in titles", subtitle = "Using the 'nrc' lexicon")
+```
+
+![](Data-exploration_files/figure-gfm/adding-sentiment-analysis-1.png)<!-- -->
