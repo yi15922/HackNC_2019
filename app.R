@@ -41,15 +41,19 @@ ui <- fluidPage(
                                     "Office",          "National") ,
                         selected = "Events"),
         
-        checkboxGroupInput(inputId = "country",
+            checkboxGroupInput(inputId = "country",
                            label = "Select countries:",
                            choices = c("Canada", "US", "GB") ,
                            selected = "US"),
         
         
-        dateRangeInput("daterange1", "Date range:",
-                       start = "2017-09-09",
-                       end   = "2018-09-28"),
+            sliderInput("TheDates",
+                    "Dates:",
+                    min = as.Date("2016-03-31","%Y-%m-%d"),
+                    max = as.Date("2018-09-28","%Y-%m-%d"),
+                    value=c(as.Date("2016-03-31"), as.Date("2017-03-31")),
+                    timeFormat=("%Y-%m-%d")),
+            
     ),
 
         # Show a plot of the generated distribution
