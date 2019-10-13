@@ -32,7 +32,7 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             checkboxGroupInput(inputId = "tag",
-                        label = "Which tags you want",
+                        label = "Select tags to view data:",
                         choices = c("Events", "PublicSector",    "Healthcare",      "Land",           
                                     "Legal" ,          "SpecialPurpose",  "MixedUse",        "Company",        
                                     "Investment",      "Hospitality",     "People",          "Finance",        
@@ -42,9 +42,14 @@ ui <- fluidPage(
                         selected = "Events"),
         
         checkboxGroupInput(inputId = "country",
-                           label = "What country do you want",
+                           label = "Select countries:",
                            choices = c("Canada", "US", "GB") ,
-                           selected = "US")
+                           selected = "US"),
+        
+        
+        dateRangeInput("daterange1", "Date range:",
+                       start = "2017-09-09",
+                       end   = "2018-09-28"),
     ),
 
         # Show a plot of the generated distribution

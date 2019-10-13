@@ -190,6 +190,10 @@ tagPop %>%
   theme_minimal() + 
   labs(title = "Top 10 Most Popular Tags")
 
+
+data %>%
+  arrange(desc(Date))
+
 ```
 
 
