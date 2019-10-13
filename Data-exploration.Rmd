@@ -2,7 +2,7 @@
 title: "CoStar Data Analysis"
 date: 10/12/19
 author: Yi Chen, Daniel Hwang, Margaret Reed
-output: github_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
