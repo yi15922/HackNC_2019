@@ -16,10 +16,7 @@ library(DT)
 
 data <- read_csv("data.csv") %>%
     as.tibble()
-<<<<<<< HEAD
-=======
 
->>>>>>> 8870ed629bed3ee7a51d8394ef082ed9cc9954d6
 data <- data %>%
     mutate(dateTime = ymd_hms(CreatedDate),
            Year = year(dateTime),
