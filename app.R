@@ -38,21 +38,20 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            checkboxGroupInput(inputId = "tag",
-                        label = "Select tags to view data:",
-                        choices = c("Events", "PublicSector",    "Healthcare",      "Land",           
-                                    "Legal" ,          "SpecialPurpose",  "MixedUse",        "Company",        
-                                    "Investment",      "Hospitality",     "People",          "Finance",        
-                                    "Analytics",       "CompaniesPeople", "Lease",           "Retail",         
-                                    "Industrial",      "Development",     "Multifamily",     "Sale",           
-                                    "Office",          "National") ,
-                        selected = "Events"),
-        
+            selectInput("tag", "Choose desired tags:",
+                        list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
+                             `Workforce` = list("Company", "CompaniesPeople", "Office"),
+                             `Business` = list("Analytics", "Finance", "Investment"),
+                             `PublicServices` = list("Healthcare", "Hospitality", "Multifamily", "People", "PublicSector"),
+                             `Sectors/Misc` = list("Events", "Industrial", "Legal", "National")
+                        ),
+                        selected = list("Development", "Company", "Analytics", "Healthcare"),
+                        multiple = TRUE),
+            
             checkboxGroupInput(inputId = "country",
-                           label = "Select countries:",
-                           choices = c("Canada", "US", "GB") ,
-                           selected = "US"),
-        
+                               label = "Select countries:",
+                               choices = c("Canada", "US", "GB") ,
+                               selected = "US"),
         
             sliderInput("TheDates",
                     "Dates:",

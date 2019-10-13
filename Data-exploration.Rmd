@@ -5,6 +5,10 @@ author: "Margaret Reed, Daniel Hwang, Yi Chen"
 output: github_document
 ---
 
+[About Page](./about.html)
+[Application](./app.html)
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -29,8 +33,8 @@ data <- read.csv("data.csv") %>%
   as_tibble()
 ```
 
-
-```{r lubridate}
+We needed to clean the data a little. We did so by coding the date variable as a date using the lubridate package. We also did some reordering and converting of times for ease of analysis. 
+```{r datta-cleaning}
 data <- data %>%
   mutate(dateTime = ymd_hms(CreatedDate),
          Year = year(dateTime),
@@ -45,12 +49,26 @@ data <- data %>%
 ```
 
 
-```{r date-viz}
+Here is our first exploratory visualization, looking at the distribution of the dates each story was created. 
+```{r initial-date-viz}
 data %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100)
+  geom_histogram(bins = 100) +
+  labs(x = "Date", y = "Number of stories", title = "Initial date distribution")
 ```
 
+We decided we wanted to look more closely at the dates in the latter half of 2018.
+
+```{r subset-date-viz}
+data %>%
+  filter(Date >= "2018-06-01") %>%
+  ggplot(aes(x = Date)) +
+  geom_histogram(bins = 100) +
+  labs(x = "Date", y = "Number of stories", title = "Subset date distribution")
+```
+
+
+Here is a visualization of the most common words in the titles overall. 
 
 ```{r word-freq-viz}
 textFreq <- data %>%
@@ -61,17 +79,32 @@ textFreq <- data %>%
 
 textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
 
-
-
 textFreq %>%
   filter(n>= 75) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col()
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
 ```
 
+Here is a visualization of the most common words in summaries overall. 
 
+```{r word-freq-sum}
+textFreq <- data %>%
+  select(Date, Summary, StoryID) %>%
+  unnest_tokens(word, Summary) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE)
 
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
 
+textFreq %>%
+  filter(n>= 150) %>%
+  ggplot(aes(x = word, y = n)) +
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Summaries")
+```
+
+Here we are sub-setting the data by countries.
 ```{r countrySplit}
 dataUSA <- subset(data, Country_USA == 1)
 dataGBR <- subset(data, Country_GBR == 1)
@@ -82,11 +115,8 @@ dataUSA %>%
 
 ```
 
-```{r gether-data}
-gatheredData <- data %>%
-  pivot_longer(Tag_None:Tag_CoStarGreenReport, names_to = "Tags") 
-```
 
+We decided to add up the number of tags each story had associated with it. 
 ```{r tags_data}
 # condenses tags into one tags column and their boolean into hasTag
 allTags <- gather(data, "tags", "hasTag", 13:35) 
@@ -113,8 +143,8 @@ data <- data %>%
 ```
 
 
-
-```{r tags_plots, fig.width=5}
+Here is a plot of the number of tags associated with a story and how many hits it got. 
+```{r tags_plots}
 # correlating number of tags with hit count
 data %>%
   select(Hits, numTags) %>%
@@ -124,12 +154,10 @@ data %>%
   scale_y_continuous(name = "Hit count") + 
   theme_minimal() + 
   labs(title = "Number of Tags Correlated with Hit Count")
+```
 
-
-
-
-
-# --------------------------------Now plotting by tag popularity
+We also decided to visualize the frequency of tags in general.
+```{r tag-pop-viz}
 
 tagPop <- allTags %>%
   count(tags, hasTag) 
@@ -137,7 +165,7 @@ tagPop <- allTags %>%
 tagPop <- tagPop %>%
   filter(hasTag == 1) %>%
   arrange(n) %>%
-  select(tags, Date, n) %>%
+  select(tags, n) %>%
   rename(total = n)
 
 tagPop <- mutate_if(tagPop, 
@@ -154,14 +182,11 @@ tagPop %>%
   scale_y_continuous(name = "# of stories with tag") + 
   theme_minimal() + 
   labs(title = "Top 10 Most Popular Tags")
-
-
-data %>%
-  arrange(Date)
-
 ```
 
 
+
+Here is a very basic multivariate linear regression model just for fun:')
 ```{r model}
 data1 <- data %>%
   drop_na()
@@ -172,13 +197,7 @@ tidy(first_model)
 glance(first_model)
 ```
 
-
-```{r tagpop-pull}
-tagPop %>%
-  select(tags) %>%
-  pull()
-```
-
+Here we also did a little sentiment analysis for fun :'')
 
 ```{r adding-sentiment-analysis}
 textDataFreq <- data %>%
@@ -193,7 +212,8 @@ textDataFreq$sentiment <- factor(textDataFreq$sentiment, levels = textDataFreq$s
 
 textDataFreq %>%
   ggplot(aes(x = sentiment, y = totSents)) +
-  geom_col()
+  geom_col() + 
+  labs(x = "sentiment", y = "frequency", title = "Frequency of sentiments associated with words in titles", subtitle = "Using the 'nrc' lexicon")
 ```
 
 

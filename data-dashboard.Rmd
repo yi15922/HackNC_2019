@@ -11,25 +11,34 @@ runtime: shiny
 library(flexdashboard)
 library(shiny)
 library(tidyverse)
+library(broom)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(tidytext)
+library(textdata)
+library(SnowballC)
 library(DT)
 ```
 
-
-```{r import-data}
+```{r load-data, include = FALSE}
 data <- read_csv("data.csv") %>%
-  tidy()
-```ß
+  as.tibble()
 
-```{r lubridate}
 data <- data %>%
   mutate(dateTime = ymd_hms(CreatedDate),
          Year = year(dateTime),
          Month = month(dateTime),
          Day = day(dateTime),
-         Date = paste(Year, Month, Day, col = "-") %>% ymd() %>% as.Date()) %>%
+         Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
   select(-dateTime, -Day, -Month, -Year) %>%
-  select(Date, everything())
+  select(Date, everything()) %>%
+  mutate(Title = as.character(Title), 
+         Summary = as.character(Summary),
+         Body = as.character(Body))
 ```
+
+
 Sidebar {.sidebar}
 =======================================================================
 
@@ -37,30 +46,28 @@ Sidebar {.sidebar}
 
 ```{r-filter-data}
 hr()
-
-sliderInput(inputId = "Year", label = "Year drafted",
-            min = min_year, max = max_year,
-            value = c(2001, max_year), step = 1, sep = "")
-
+selectInput("tag", "Choose desired tags:",
+                  list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
+                       `Workforce` = list("Company", "CompaniesPeople", "Office"),
+                       `Business` = list("Analytics", "Finance", "Investment"),
+                       `PublicServices` = list("Healthcare", "Hospitality", "Multifamily", "People", "PublicSector"),
+                       `Sectors/Misc` = list("Events", "Industrial", "Legal", "National")
+                  ),
+                  selected = list("Development", "Company", "Analytics", "Healthcare"),
+                  multiple = TRUE)
 hr()
 
-checkboxGroupInput(inputId = "draft_round", label = "Draft Round",
-                   choices = draft_round, 
-                   selected = c(1, 2, 3)
-                   )
-
+checkboxGroupInput(inputId = "country",
+                         label = "Select countries:",
+                         choices = c("Canada", "US", "GB") ,
+                         selected = "US")
 hr()
-
-x_var <- reactive({ syms(input$x) })
-y_var <- reactive({ syms(input$y) })
 
 sel_data <- reactive({
-  nfl_draft %>%
+data %>%
     dplyr::filter(
-      between(Year, input$Year[1], input$Year[2]),
-      Rnd %in% input$draft_round
+      between(year, input$year[1], input$year[2])
       ) %>%
-    dplyr::filter(!is.na( !!!x_var() ), !is.na( !!!y_var() ))
 })
 ```
 
@@ -71,29 +78,11 @@ Dashboard
 Row
 -----------------------------------------------------------------------
 
-### Percentage of players with data on selected variables {.value-box}
-
-```{r}
-renderGauge({
-  
-  n_sel_player <- nfl_draft %>%
-    dplyr::filter(Rnd %in% input$draft_round) %>%
-    distinct(Player_Id) %>%
-    nrow()
-
-  p <- round( nrow(sel_data()) / n_sel_player * 100, 0)
-  
-  gauge(p, min = 0, max = 100, symbol = "%", 
-        gaugeSectors(success = c(80, 100), warning = c(40, 79), 
-                     danger = c(0, 39)))
-})
-```
-
 ### Average career approximate value {.value-box}
 
 ```{r-avg-carAV}
 renderValueBox({
-  valueBox(value = round(mean(sel_data()$CarAV, na.rm = TRUE), 2), 
+  valueBox(value = round(mean(sel_data()$Hits, na.rm = TRUE), 2), 
            icon = "glyphicon-hand-up")
 })
 ```
@@ -102,7 +91,7 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  valueBox(value = round(mean(sel_data()$Age, na.rm = TRUE), 2), 
+  valueBox(value = round(mean(sel_data()$numtags, na.rm = TRUE), 2), 
            icon = "glyphicon-hourglass")
 })
 ```
@@ -110,87 +99,25 @@ renderValueBox({
 Row
 -----------------------------------------------------------------------
 
-### Variable choices {data-width=340}
-
-```{r-choose-variables}
-selectInput(
-  inputId = "tag", label = "Tags to see",
-  choices = c(
-    "Career Approximate Value" = "CarAV", 
-    "Approximate Value for First 4 Years" = "First4AV",
-    "Age at Time of Draft" = "Age",
-    "Number of Years as Starter" = "St",
-    "Number of All-Pro Selections" = "AP1",
-    "Number of Pro Bowl Selections" = "PB",
-    "Games Played" = "G"
-    ),
-  selected = "CarAV"
-  )
-
-selectInput(
-  inputId = "y", label = "Y-axis",
-  choices = c(
-    "Career Approximate Value" = "CarAV",
-    "Approximate Value for First 4 Years" = "First4AV",
-    "Age at Time of Draft" = "Age",
-    "Number of Years as Starter" = "St",
-    "Number of All-Pro Selections" = "AP1",
-    "Number of Pro Bowl Selections" = "PB",
-    "Games Played" = "G"
-    ),
-  selected = "G"
-  )
-
-xlab <- reactive({
-  case_when(
-    input$x == "CarAV" ~  
-      "Career Approximate Value",
-    input$x == "First4AV"        ~  
-      "Approximate Value for First 4 Years",
-    input$x == "Age"              ~ 
-      "Age at Time of Draft",
-    input$x == "St"       ~ 
-      "Number of Years as Starter",
-    input$x == "AP1"       ~ 
-      "Number of All-Pro Selections",
-    input$x == "PB"           ~ 
-      "Number of Pro Bowl Selections",
-    input$x == "G"          ~ 
-      "Games Played"
-  )
-})
-
-ylab <- reactive({
-  case_when(
-    input$y == "CarAV" ~  
-      "Career Approximate Value",
-    input$y == "First4AV"        ~  
-      "Approximate Value for First 4 Years",
-    input$y == "Age"              ~ 
-      "Age at Time of Draft",
-    input$y == "St"       ~ 
-      "Number of Years as Starter",
-    input$y == "AP1"       ~ 
-      "Number of All-Pro Selections",
-    input$y == "PB"           ~ 
-      "Number of Pro Bowl Selections",
-    input$y == "G"          ~ 
-      "Games Played"
-  )
-})
-
-br()
-```
-
 ### Visualization {data-width=700}
+
+```{r word-freq-viz}
+textFreq <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE)
+
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+```
 
 ```{r}
 renderPlot({
-  ggplot(data = sel_data(),
-         mapping = aes_string(x = input$x, y = input$y, color = "Rnd")) +
-  geom_point(size = 2, alpha = 0.8) +
-  theme_minimal() +
-  labs(x = xlab(), y = ylab(), color = "Draft Round")
+  textFreq %>%
+    filter(n>= 75) %>%
+  ggplot(aes(x = word, y = n)) +
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
   })
 ```
 
