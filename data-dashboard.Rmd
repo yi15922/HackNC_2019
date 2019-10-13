@@ -101,6 +101,7 @@ data %>%
     drop_na() %>%
     select(-Body) %>%
     dplyr::filter(
+
       between(Date, input$TheDates[1], input$TheDates[2])
       )
 })

@@ -64,6 +64,7 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
+           dataTableOutput("table"),
            plotOutput("timeTagPlot")
         )
     )
@@ -72,18 +73,25 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$timeTagPlot <- renderPlot({
-        
-        sel_data <- reactive({
-            data %>%
-                filter(
-                    between(Date, input$TheDates[1], input$TheDates[2])
+        output$timeTagPlot <- renderPlot({
+            sel_data <-
+                data %>%
+                    filter(
+                        between(Date, input$TheDates[1], input$TheDates[2])
                 )
-        })
-    })
+       
+            # output$table <- renderDataTable({
+            #     datatable(sel_data)
+            #     })
+            
+            output$timeTagPlot <- renderPlot({
+                ggplot(data = sel_data, mapping = aes(x = Tag_National, y = Hits)) +
+                    geom_col();
+
+
+            })
+
     
-    output$renderTable <- renderDataTable({
-        datatable( sel_data())
     #ggplot(tagPop[month(tags) == month(TheDates)], mapping = aes(x = tags))
     
     })
