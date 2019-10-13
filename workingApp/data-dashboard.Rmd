@@ -1,0 +1,174 @@
+---
+title: "data-dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    social: menu
+runtime: shiny
+---
+
+```{r load-packages, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(tidyverse)
+library(broom)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(tidytext)
+library(textdata)
+library(SnowballC)
+library(DT)
+```
+
+```{r load-data, include = FALSE}
+data <- read_csv("data.csv") %>%
+  as.tibble()
+
+data <- data %>%
+  mutate(dateTime = ymd_hms(CreatedDate),
+         Year = year(dateTime),
+         Month = month(dateTime),
+         Day = day(dateTime),
+         Date = paste(Year, Month, Day, sep = "-") %>% ymd() %>% as.Date()) %>%
+  select(-dateTime, -Day, -Month, -Year) %>%
+  select(Date, everything()) %>%
+  mutate(Title = as.character(Title), 
+         Summary = as.character(Summary),
+         Body = as.character(Body))
+```
+
+```{r more-cleaning, include = FALSE}
+allTags <- gather(data, "tags", "hasTag", 13:35) 
+allTags <- allTags[order(allTags$StoryID),]
+
+# to find all tags associated with an article, filter for hasTag is true
+allTags %>%
+  filter(StoryID == 184098 & hasTag == 1) %>%
+  select(Title, Date, tags)
+
+# creates a dataframe with story titles and their tag counts
+tagCounts <- allTags %>%
+  group_by(StoryID) %>%
+  count(hasTag == 1) %>%
+  select(StoryID, n) %>%
+  rename(numTags = n)
+
+# previous operation returns both true and false, removing all FALSE
+toDelete <- seq(1, nrow(tagCounts), 2)
+tagCounts <- tagCounts[-toDelete, ]
+
+data <- data %>%
+  full_join(tagCounts)
+```
+
+
+Sidebar {.sidebar}
+=======================================================================
+
+### Story characteristics
+
+```{r filter-data}
+hr()
+selectInput("tag", "Choose desired tags:",
+                  list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
+                       `Workforce` = list("Company", "CompaniesPeople", "Office"),
+                       `Business` = list("Analytics", "Finance", "Investment"),
+                       `PublicServices` = list("Healthcare", "Hospitality", "Multifamily", "People", "PublicSector"),
+                       `Sectors/Misc` = list("Events", "Industrial", "Legal", "National")
+                  ),
+                  selected = list("Development", "Company", "Analytics", "Healthcare"),
+                  multiple = TRUE)
+hr()
+
+checkboxGroupInput(inputId = "country",
+                         label = "Select countries:",
+                         choices = c("Canada", "US", "GB") ,
+                         selected = "US")
+hr()
+
+sliderInput("TheDates",
+                    "Dates:",
+                    min = as.Date("2016-03-31","%Y-%m-%d"),
+                    max = as.Date("2018-09-28","%Y-%m-%d"),
+                    value=c(as.Date("2017-04-05"), as.Date("2018-04-13")),
+                    timeFormat=("%Y-%m-%d"))
+
+hr()
+
+sel_data <- reactive({
+data %>%
+    drop_na() %>%
+    select(-Body) %>%
+    dplyr::filter(
+
+      between(Date, input$TheDates[1], input$TheDates[2])
+      )
+})
+```
+
+
+Dashboard
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### Average number of hits {.value-box}
+
+```{r avg-carAV}
+renderValueBox({
+  valueBox(value = round(mean(sel_data()$Hits, na.rm = TRUE), 2))
+})
+```
+
+### Average number of tags {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(value = round(mean(sel_data()$numTags, na.rm = TRUE), 2))
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Visualization {data-width=700}
+
+```{r word-freq-viz}
+textFreq <- data %>%
+  select(Date, Title, StoryID) %>%
+  unnest_tokens(word, Title) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE)
+
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+```
+
+```{r}
+renderPlot({
+  textFreq %>%
+    filter(n>= 75) %>%
+  ggplot(aes(x = word, y = n)) +
+    geom_col() +
+  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
+  })
+```
+
+Data
+=======================================================================
+
+### About the data {data-width=100}
+
+This [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) uses data 
+from CoStar
+
+The data used in the analysis is shown below.
+
+```{r data-table}
+DT::renderDataTable({
+  datatable( sel_data() )
+})
+```
+
+
