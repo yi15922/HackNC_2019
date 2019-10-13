@@ -44,7 +44,7 @@ Sidebar {.sidebar}
 
 ### NFL Draft Statistics
 
-```{r-filter-data}
+```{r filter-data}
 hr()
 selectInput("tag", "Choose desired tags:",
                   list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
@@ -67,7 +67,7 @@ sel_data <- reactive({
 data %>%
     dplyr::filter(
       between(year, input$year[1], input$year[2])
-      ) %>%
+      )
 })
 ```
 
