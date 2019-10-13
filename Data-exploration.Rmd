@@ -21,8 +21,6 @@ library(SnowballC)
 
 
 data(stop_words)
-afinn <- get_sentiments("afinn")
-bing <- get_sentiments("bing")
 nrc <- get_sentiments("nrc")
 ```
 
@@ -53,60 +51,24 @@ data %>%
   geom_histogram(bins = 100)
 ```
 
-```{r small-data}
-smallData <- data %>%
-  slice(1:20)
-```
 
-
-```{r small-data-test}
-textSmallData <- smallData %>%
-  select(Date, Title, StoryID) %>%
-  unnest_tokens(word, Title)
-
+```{r word-freq-viz}
 textFreq <- data %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
   anti_join(stop_words) %>%
   count(word, sort = TRUE)
 
+textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+
+
+
 textFreq %>%
-  filter(n>= 100) %>%
+  filter(n>= 75) %>%
   ggplot(aes(x = word, y = n)) +
     geom_col()
 ```
 
-
-```{r bing-edit}
-bing <- bing %>%
-  mutate(sentValue = case_when(
-    sentiment == "negative" ~ -1,
-    sentiment == "positive" ~ 1
-  ))
-```
-
-
-
-```{r sentiment-begin}
-textData <- data %>%
-  select(Date, Title, StoryID) %>%
-  unnest_tokens(word, Title) %>%
-  inner_join(nrc) # %>%
-  # group_by(StoryID) %>%
-  # summarize(meanSent = mean(value),
-  #           tot_words = n())
-```
-
-
-```{r hits}
-# hitsSentData <- full_join(data, textData) %>%
-#   select(StoryID, Hits, meanSent) %>%
-#   drop_na()
-# 
-# hitsSentData %>%
-#   ggplot(aes(x = meanSent, y = Hits)) +
-#   geom_point()
-```
 
 
 
