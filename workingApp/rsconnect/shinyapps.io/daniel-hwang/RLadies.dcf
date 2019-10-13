@@ -1,0 +1,12 @@
+name: RLadies
+title: RLadies
+username:
+account: daniel-hwang
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1322341
+bundleId: 2495822
+url: https://daniel-hwang.shinyapps.io/RLadies/
+when: 1570949420.44243
+asMultiple: FALSE
+asStatic: FALSE

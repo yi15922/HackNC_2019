@@ -1,0 +1,40 @@
+h1 {
+	text-align: center;
+	font-size: 42px;
+	position: center;
+}
+
+h4{
+	color: #001A57;
+}
+
+img {
+	border-color: red;
+	border-width: 3px;
+	height: 400px;
+}
+
+body {
+	background: #5BC4FF;
+	color: white;
+	font: "source-sans-pro";
+}
+
+.withlove{
+  @extend .about
+	color: pink;
+}
+
+.about{
+  position: center;
+}
+
+/* unvisited link */
+a:link {
+  color: white;
+}
+
+/* visited link */
+a:visited {
+  color: pink;
+}
