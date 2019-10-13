@@ -158,10 +158,10 @@ renderPlot({
 Data
 =======================================================================
 
-### About the data
+### About the data {data-width=100}
 
 This [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) uses data 
-from [Pro Football Reference](http://www.pro-football-reference.com/).
+from CoStar
 
 The data used in the analysis is shown below.
 
