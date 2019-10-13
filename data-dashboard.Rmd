@@ -38,7 +38,7 @@ data <- data %>%
          Body = as.character(Body))
 ```
 
-```{r more-cleaning}
+```{r more-cleaning, include = FALSE}
 allTags <- gather(data, "tags", "hasTag", 13:35) 
 allTags <- allTags[order(allTags$StoryID),]
 
