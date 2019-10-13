@@ -87,7 +87,6 @@ textFreq %>%
 ```
 
 Here is a visualization of the most common words in summaries overall. 
-
 ```{r word-freq-sum}
 textFreq <- data %>%
   select(Date, Summary, StoryID) %>%
