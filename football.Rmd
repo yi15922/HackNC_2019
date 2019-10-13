@@ -1,5 +1,5 @@
 ---
-title: "Part 03 Dashboard"
+title: "NFL Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -34,19 +34,25 @@ Sidebar {.sidebar}
 
 ### NFL Draft Statistics
 
-```{r-filter-data}
+```{r filter-data}
 hr()
+
 sliderInput(inputId = "year", label = "Year drafted",
             min = min_year, max = max_year,
             value = c(2001, max_year), step = 1, sep = "")
+
 hr()
+
 checkboxGroupInput(inputId = "draft_round", label = "Draft Round",
                    choices = draft_round, 
                    selected = c(1, 2, 3)
                    )
+
 hr()
+
 x_var <- reactive({ syms(input$x) })
 y_var <- reactive({ syms(input$y) })
+
 sel_data <- reactive({
   nfl_draft %>%
     dplyr::filter(
@@ -71,8 +77,9 @@ renderGauge({
   
   n_sel_player <- nfl_draft %>%
     dplyr::filter(Rnd %in% input$draft_round) %>%
-    distinct(player_id) %>%
+    distinct(Player_Id) %>%
     nrow()
+
   p <- round( nrow(sel_data()) / n_sel_player * 100, 0)
   
   gauge(p, min = 0, max = 100, symbol = "%", 
@@ -83,7 +90,7 @@ renderGauge({
 
 ### Average career approximate value {.value-box}
 
-```{r-avg-carAV}
+```{r avg-carAV}
 renderValueBox({
   valueBox(value = round(mean(sel_data()$car_av, na.rm = TRUE), 2), 
            icon = "glyphicon-hand-up")
@@ -104,7 +111,7 @@ Row
 
 ### Variable choices {data-width=340}
 
-```{r-choose-variables}
+```{r choose-variables}
 selectInput(
   inputId = "x", label = "X-axis",
   choices = c(
@@ -118,6 +125,7 @@ selectInput(
     ),
   selected = "car_av"
   )
+
 selectInput(
   inputId = "y", label = "Y-axis",
   choices = c(
@@ -131,6 +139,7 @@ selectInput(
     ),
   selected = "g"
   )
+
 xlab <- reactive({
   case_when(
     input$x == "car_av" ~  
@@ -149,6 +158,7 @@ xlab <- reactive({
       "Games Played"
   )
 })
+
 ylab <- reactive({
   case_when(
     input$y == "car_av" ~  
@@ -167,6 +177,7 @@ ylab <- reactive({
       "Games Played"
   )
 })
+
 br()
 ```
 
@@ -192,7 +203,7 @@ from [Pro Football Reference](http://www.pro-football-reference.com/).
 
 The data used in the analysis is shown below.
 
-```{r-data-table}
+```{r data-table}
 DT::renderDataTable({
   datatable( sel_data() )
 })

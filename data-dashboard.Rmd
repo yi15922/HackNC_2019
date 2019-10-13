@@ -38,13 +38,37 @@ data <- data %>%
          Body = as.character(Body))
 ```
 
+```{r more-cleaning}
+allTags <- gather(data, "tags", "hasTag", 13:35) 
+allTags <- allTags[order(allTags$StoryID),]
+
+# to find all tags associated with an article, filter for hasTag is true
+allTags %>%
+  filter(StoryID == 184098 & hasTag == 1) %>%
+  select(Title, Date, tags)
+
+# creates a dataframe with story titles and their tag counts
+tagCounts <- allTags %>%
+  group_by(StoryID) %>%
+  count(hasTag == 1) %>%
+  select(StoryID, n) %>%
+  rename(numTags = n)
+
+# previous operation returns both true and false, removing all FALSE
+toDelete <- seq(1, nrow(tagCounts), 2)
+tagCounts <- tagCounts[-toDelete, ]
+
+data <- data %>%
+  full_join(tagCounts)
+```
+
 
 Sidebar {.sidebar}
 =======================================================================
 
-### NFL Draft Statistics
+### Story characteristics
 
-```{r-filter-data}
+```{r filter-data}
 hr()
 selectInput("tag", "Choose desired tags:",
                   list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
@@ -63,11 +87,22 @@ checkboxGroupInput(inputId = "country",
                          selected = "US")
 hr()
 
+sliderInput("TheDates",
+                    "Dates:",
+                    min = as.Date("2016-03-31","%Y-%m-%d"),
+                    max = as.Date("2018-09-28","%Y-%m-%d"),
+                    value=c(as.Date("2017-04-05"), as.Date("2018-04-13")),
+                    timeFormat=("%Y-%m-%d"))
+
+hr()
+
 sel_data <- reactive({
 data %>%
+    drop_na() %>%
+    select(-Body) %>%
     dplyr::filter(
-      between(year, input$year[1], input$year[2])
-      ) %>%
+      between(Date, input$TheDates[1], input$TheDates[2])
+      )
 })
 ```
 
@@ -78,21 +113,19 @@ Dashboard
 Row
 -----------------------------------------------------------------------
 
-### Average career approximate value {.value-box}
+### Average number of hits {.value-box}
 
-```{r-avg-carAV}
+```{r avg-carAV}
 renderValueBox({
-  valueBox(value = round(mean(sel_data()$Hits, na.rm = TRUE), 2), 
-           icon = "glyphicon-hand-up")
+  valueBox(value = round(mean(sel_data()$Hits, na.rm = TRUE), 2))
 })
 ```
 
-### Average age of players {.value-box}
+### Average number of tags {.value-box}
 
 ```{r}
 renderValueBox({
-  valueBox(value = round(mean(sel_data()$numtags, na.rm = TRUE), 2), 
-           icon = "glyphicon-hourglass")
+  valueBox(value = round(mean(sel_data()$numTags, na.rm = TRUE), 2))
 })
 ```
 
@@ -131,7 +164,7 @@ from [Pro Football Reference](http://www.pro-football-reference.com/).
 
 The data used in the analysis is shown below.
 
-```{r-data-table}
+```{r data-table}
 DT::renderDataTable({
   datatable( sel_data() )
 })
