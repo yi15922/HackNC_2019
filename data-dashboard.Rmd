@@ -55,6 +55,7 @@ tagCounts <- allTags %>%
 toDelete <- seq(1, nrow(tagCounts), 2)
 tagCounts <- tagCounts[-toDelete, ]
 
+# Appends numTags to last column of dataframe
 data <- data %>%
   full_join(tagCounts)
 ```
@@ -103,6 +104,7 @@ sliderInput("TheDates",
 ```
 
 ```{r countrySplit}
+# splits countries into separate datasets
 US <- subset(data, Country_USA == 1)
 GB <- subset(data, Country_GBR == 1)
 Canada <- subset(data, Country_CAN == 1)
@@ -116,6 +118,7 @@ Canada <- subset(data, Country_CAN == 1)
 allTags <- allTags %>%
   filter(hasTag == 1)
 
+# handles user country choice
 countryData <- reactive({
   if (input$country == "All"){ 
     data
@@ -129,7 +132,7 @@ countryData <- reactive({
 })
 
 
-
+# handles user date range and tag choice
 sel_data <- reactive({
   if (input$tagSelected == "All") { 
     countryData() %>%
@@ -185,6 +188,19 @@ renderValueBox({
 })
 ```
 
+### Percentage of all data contained in your search
+
+```{r percentGauge}
+
+
+renderGauge({
+  perc <- nrow(sel_data())/nrow(data)*100
+  
+  gauge(round(perc, 2), min = 0, max = 100, symbol = "%")
+})
+
+
+```
 
 Row
 -----------------------------------------------------------------------
@@ -192,6 +208,8 @@ Row
 ### Visualization {data-width=700}
 
 ```{r plotDataReactive}
+
+# setting up reactive plot data
 plotData <- reactive({ 
   sel_data() %>%
   select(Date, Title, StoryID) %>%
@@ -207,9 +225,9 @@ plotData <- reactive({
 renderPlot({
   plotData() %>%
     slice(0:10) %>%
-  ggplot(aes(x = reorder(word, -n), y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
+    ggplot(aes(x = reorder(word, -n), y = n)) +
+    geom_col(fill = "dodgerblue") +
+    labs(x = "Words", y = "Frequency", title = "Most Frequently Occurring Words in Titles of Stories")
   })
 ```
 
