@@ -3,7 +3,7 @@ Initial data exploration
 Margaret Reed, Daniel Hwang, Yi Chen
 Oct 12, 2019
 
-[About](./about.html) [Application](./app.html)
+[About Page](./about.html) [Application](./app.html)
 
 ``` r
 data <- read.csv("data.csv") %>%
