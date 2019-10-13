@@ -12,9 +12,10 @@ library(tidyverse)
 library(broom)
 library(dplyr)
 library(lubridate)
+library(DT)
 
 data <- read_csv("data.csv") %>%
-    tidy()
+    as.tibble()
 data <- data %>%
     mutate(dateTime = ymd_hms(CreatedDate),
            Year = year(dateTime),
@@ -60,7 +61,7 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("distPlot")
+           plotOutput("timeTagPlot")
         )
     )
 
@@ -68,15 +69,23 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+    output$timeTagPlot <- renderPlot({
+        
+        sel_data <- reactive({
+            data %>%
+                filter(
+                    between(Date, input$TheDates[1], input$TheDates[2])
+                )
+        })
+    })
+    
+    output$renderTable <- renderDataTable({
+        datatable( sel_data())
+    #ggplot(tagPop[month(tags) == month(TheDates)], mapping = aes(x = tags))
+    
     })
 }
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)

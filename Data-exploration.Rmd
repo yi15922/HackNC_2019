@@ -2,7 +2,7 @@
 title: "Initial data exploration"
 date: "Oct 12, 2019"
 author: "Margaret Reed, Daniel Hwang, Yi Chen"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -133,7 +133,7 @@ allTags <- allTags[order(allTags$StoryID),]
 # to find all tags associated with an article, filter for hasTag is true
 allTags %>%
   filter(StoryID == 184098 & hasTag == 1) %>%
-  select(Title, tags)
+  select(Title, Date, tags)
 
 # creates a dataframe with story titles and their tag counts
 tagCounts <- allTags %>%
@@ -175,7 +175,7 @@ tagPop <- allTags %>%
 tagPop <- tagPop %>%
   filter(hasTag == 1) %>%
   arrange(n) %>%
-  select(tags, n) %>%
+  select(tags, Date, n) %>%
   rename(total = n)
 
 tagPop <- mutate_if(tagPop, 
