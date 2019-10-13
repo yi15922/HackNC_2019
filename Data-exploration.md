@@ -1,9 +1,7 @@
 Initial data exploration
 ================
-Margaret Reed, Daniel Hwang, Yi Chen
-Oct 12, 2019
-
-[About Page](./about.html) [Application](./app.html)
+Yi Chen, Daniel Hwang, Margaret Reed
+10/12/19
 
 ``` r
 data <- read.csv("data.csv") %>%

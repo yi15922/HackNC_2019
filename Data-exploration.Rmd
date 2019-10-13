@@ -1,13 +1,9 @@
 ---
 title: "Initial data exploration"
-date: "Oct 12, 2019"
-author: "Margaret Reed, Daniel Hwang, Yi Chen"
+date: 10/12/19
+author: Yi Chen, Daniel Hwang, Margaret Reed
 output: github_document
 ---
-
-[About Page](./about.html)
-[Application](./app.html)
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

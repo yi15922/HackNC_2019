@@ -1,9 +1,11 @@
 ---
-title: "data dashboard"
+title: "CoStar Interactive"
+
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
     social: menu
+    vertical_layout: scroll
 runtime: shiny
 ---
 
@@ -42,11 +44,6 @@ data <- data %>%
 allTags <- gather(data, "tags", "hasTag", 13:35) 
 allTags <- allTags[order(allTags$StoryID),]
 
-# to find all tags associated with an article, filter for hasTag is true
-allTags %>%
-  filter(StoryID == 184098 & hasTag == 1) %>%
-  select(Title, Date, tags)
-
 # creates a dataframe with story titles and their tag counts
 tagCounts <- allTags %>%
   group_by(StoryID) %>%
@@ -68,7 +65,7 @@ Sidebar {.sidebar}
 
 ### Story characteristics
 
-```{r filter-data}
+```{r chooseTags}
 hr()
 selectInput("tag", "Choose desired tags:",
                   list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
@@ -79,29 +76,41 @@ selectInput("tag", "Choose desired tags:",
                   ),
                   selected = list("Development", "Company", "Analytics", "Healthcare"),
                   multiple = TRUE)
+```
+
+
+
+```{r chooseCountry}
 hr()
 
 checkboxGroupInput(inputId = "country",
                          label = "Select countries:",
                          choices = c("Canada", "US", "GB") ,
                          selected = "US")
+```
+
+
+```{r chooseDateRange}
 hr()
 
 sliderInput("TheDates",
-                    "Dates:",
+                    "Move the sliders to select a date range:",
                     min = as.Date("2016-03-31","%Y-%m-%d"),
                     max = as.Date("2018-09-28","%Y-%m-%d"),
                     value=c(as.Date("2017-04-05"), as.Date("2018-04-13")),
                     timeFormat=("%Y-%m-%d"))
+```
 
+
+
+```{r makeReactive}
 hr()
 
 sel_data <- reactive({
 data %>%
     drop_na() %>%
     select(-Body) %>%
-    dplyr::filter(
-
+    filter(
       between(Date, input$TheDates[1], input$TheDates[2])
       )
 })
@@ -114,20 +123,28 @@ Dashboard
 Row
 -----------------------------------------------------------------------
 
-### Average number of hits {.value-box}
+### Average number of hits per story {.value-box}
 
-```{r avg-carAV}
+```{r avg-hitsPerStory}
 renderValueBox({
   valueBox(value = round(mean(sel_data()$Hits, na.rm = TRUE), 2))
 })
 ```
 
-### Average number of tags {.value-box}
+### Average number of tags per story {.value-box}
 
-```{r}
+```{r avg-tagsPerStory}
 renderValueBox({
   valueBox(value = round(mean(sel_data()$numTags, na.rm = TRUE), 2))
 })
+```
+
+### Total number of stories {.value-box}
+```{r totalStory}
+renderValueBox({
+  valueBox(value = count(sel_data()))
+})
+
 ```
 
 Row
@@ -136,20 +153,27 @@ Row
 ### Visualization {data-width=700}
 
 ```{r word-freq-viz}
-textFreq <- data %>%
+plotData <- reactive({ 
+  data %>%
+  drop_na() %>%
+    select(-Body) %>%
+    filter(
+      between(Date, input$TheDates[1], input$TheDates[2])
+      ) %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
   anti_join(stop_words) %>%
   count(word, sort = TRUE)
+})
 
-textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
+#plotData()$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFreq$n)))])
 ```
 
-```{r}
+```{r plot_rendering}
 renderPlot({
-  textFreq %>%
-    filter(n>= 75) %>%
-  ggplot(aes(x = word, y = n)) +
+  plotData() %>%
+    slice(0:10) %>%
+  ggplot(aes(x = reorder(word, -n), y = n)) +
     geom_col() +
   labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
   })
@@ -161,12 +185,14 @@ Data
 ### About the data {data-width=100}
 
 This [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) uses data 
-from CoStar
+from CoStar.
 
 The data used in the analysis is shown below.
 
 ```{r data-table}
-DT::renderDataTable({
-  datatable( sel_data() )
+renderDataTable({
+  datatable(sel_data() %>%
+               select(-(11:34))
+             ) 
 })
 ```

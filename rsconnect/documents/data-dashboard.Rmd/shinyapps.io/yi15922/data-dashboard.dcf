@@ -1,0 +1,12 @@
+name: data-dashboard
+title: data-dashboard
+username:
+account: yi15922
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1322438
+bundleId: 2495716
+url: https://yi15922.shinyapps.io/data-dashboard/
+when: 1570944736.85133
+asMultiple: FALSE
+asStatic: FALSE
