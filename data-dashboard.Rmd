@@ -44,7 +44,7 @@ data <- data %>%
 allTags <- gather(data, "tags", "hasTag", 13:35) 
 allTags <- allTags[order(allTags$StoryID),]
 
-# creates a dataframe with story titles and their tag counts
+# creates a dataframe with article titles and their tag counts
 tagCounts <- allTags %>%
   group_by(StoryID) %>%
   count(hasTag == 1) %>%
@@ -55,6 +55,7 @@ tagCounts <- allTags %>%
 toDelete <- seq(1, nrow(tagCounts), 2)
 tagCounts <- tagCounts[-toDelete, ]
 
+# Appends numTags to last column of dataframe
 data <- data %>%
   full_join(tagCounts)
 ```
@@ -63,19 +64,20 @@ data <- data %>%
 Sidebar {.sidebar}
 =======================================================================
 
-### Story characteristics
+### Dataset Characteristics
 
 ```{r chooseTags}
 hr()
-selectInput("tag", "Choose desired tags:",
-                  list(`RealEstate` = list("Development", "Land", "Lease", "MixedUse", "Retail", "Sale", "SpecialPurpose"),
-                       `Workforce` = list("Company", "CompaniesPeople", "Office"),
-                       `Business` = list("Analytics", "Finance", "Investment"),
-                       `PublicServices` = list("Healthcare", "Hospitality", "Multifamily", "People", "PublicSector"),
-                       `Sectors/Misc` = list("Events", "Industrial", "Legal", "National")
+selectInput("tagSelected", "Choose a tag to search for:",
+                  list("All", 
+                       `RealEstate` = list("Tag_Development", "Tag_Land", "Tag_Lease", "Tag_MixedUse", "Tag_Retail", "Tag_Sale", "SpecialPurpose"),
+                       `Workforce` = list("Tag_Company", "Tag_CompaniesPeople", "Tag_Office"),
+                       `Business` = list("Tag_Analytics", "Tag_Finance", "Tag_Investment"),
+                       `PublicServices` = list("Tag_Healthcare", "Tag_Hospitality", "Tag_Multifamily", "Tag_People", "Tag_PublicSector"),
+                       `Sectors/Misc` = list("Tag_Events", "Tag_Industrial", "Tag_Legal", "Tag_National")
                   ),
-                  selected = list("Development", "Company", "Analytics", "Healthcare"),
-                  multiple = TRUE)
+                  selected = "",
+                  multiple = FALSE)
 ```
 
 
@@ -83,10 +85,10 @@ selectInput("tag", "Choose desired tags:",
 ```{r chooseCountry}
 hr()
 
-checkboxGroupInput(inputId = "country",
+radioButtons(inputId = "country",
                          label = "Select countries:",
-                         choices = c("Canada", "US", "GB") ,
-                         selected = "US")
+                         choices = c("All", "Canada", "US", "GB") ,
+                         selected = "All")
 ```
 
 
@@ -101,19 +103,58 @@ sliderInput("TheDates",
                     timeFormat=("%Y-%m-%d"))
 ```
 
+```{r countrySplit}
+# splits countries into separate datasets
+US <- subset(data, Country_USA == 1)
+GB <- subset(data, Country_GBR == 1)
+Canada <- subset(data, Country_CAN == 1)
 
+```
 
 ```{r makeReactive}
-hr()
 
+
+
+allTags <- allTags %>%
+  filter(hasTag == 1)
+
+# handles user country choice
+countryData <- reactive({
+  if (input$country == "All"){ 
+    data
+  } else if (input$country == "Canada"){ 
+    Canada
+  } else if (input$country == "US"){ 
+    US
+  } else if (input$country == "GB"){
+    GB
+  }
+})
+
+
+# handles user date range and tag choice
 sel_data <- reactive({
-data %>%
+  if (input$tagSelected == "All") { 
+    countryData() %>%
     drop_na() %>%
     select(-Body) %>%
     filter(
       between(Date, input$TheDates[1], input$TheDates[2])
       )
-})
+    } else {
+  allTags %>%
+        filter(tags == input$tagSelected) %>%
+        full_join(countryData()) %>%
+        drop_na() %>%
+        select(-Body) %>%
+        filter(
+          between(Date, input$TheDates[1], input$TheDates[2])
+          )
+      } 
+  })
+
+
+
 ```
 
 
@@ -123,7 +164,15 @@ Dashboard
 Row
 -----------------------------------------------------------------------
 
-### Average number of hits per story {.value-box}
+### Stories found {.value-box}
+```{r totalStory}
+renderValueBox({
+  valueBox(value = count(sel_data()))
+})
+
+```
+
+### Average hits per article {.value-box}
 
 ```{r avg-hitsPerStory}
 renderValueBox({
@@ -131,7 +180,7 @@ renderValueBox({
 })
 ```
 
-### Average number of tags per story {.value-box}
+### Average number of tags per article {.value-box}
 
 ```{r avg-tagsPerStory}
 renderValueBox({
@@ -139,11 +188,17 @@ renderValueBox({
 })
 ```
 
-### Total number of stories {.value-box}
-```{r totalStory}
-renderValueBox({
-  valueBox(value = count(sel_data()))
+### Percentage of all data contained in your search
+
+```{r percentGauge}
+
+
+renderGauge({
+  perc <- nrow(sel_data())/nrow(data)*100
+  
+  gauge(round(perc, 2), min = 0, max = 100, symbol = "%")
 })
+
 
 ```
 
@@ -152,14 +207,11 @@ Row
 
 ### Visualization {data-width=700}
 
-```{r word-freq-viz}
+```{r plotDataReactive}
+
+# setting up reactive plot data
 plotData <- reactive({ 
-  data %>%
-  drop_na() %>%
-    select(-Body) %>%
-    filter(
-      between(Date, input$TheDates[1], input$TheDates[2])
-      ) %>%
+  sel_data() %>%
   select(Date, Title, StoryID) %>%
   unnest_tokens(word, Title) %>%
   anti_join(stop_words) %>%
@@ -173,9 +225,10 @@ plotData <- reactive({
 renderPlot({
   plotData() %>%
     slice(0:10) %>%
-  ggplot(aes(x = reorder(word, -n), y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
+    ggplot(aes(x = reorder(word, -n), y = n)) +
+    geom_col(fill = "dodgerblue") +
+    labs(x = "Words", y = "Frequency", title = "Most Frequently Occurring Words in Titles of Stories") + 
+    theme_minimal()
   })
 ```
 

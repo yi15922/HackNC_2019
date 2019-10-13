@@ -1,16 +1,20 @@
-Initial data exploration
+CoStar Data Analysis
 ================
 Yi Chen, Daniel Hwang, Margaret Reed
 10/12/19
+
+## Reading the Data
 
 ``` r
 data <- read.csv("data.csv") %>%
   as_tibble()
 ```
 
+## Preliminary Cleanup
+
 We needed to clean the data a little. We did so by coding the date
-variable as a date using the lubridate package. We also did some
-reordering and converting of times for ease of analysis.
+variable as a date using the `lubridate` package. We also resorted and
+converted other values for ease of analysis.
 
 ``` r
 data <- data %>%
@@ -26,32 +30,44 @@ data <- data %>%
          Body = as.character(Body))
 ```
 
-Here is our first exploratory visualization, looking at the distribution
-of the dates each story was created.
+## Visualizations
+
+### Distributions
+
+Below is our first visualization, showing the distribution of the
+creation dates of the stories.
 
 ``` r
 data %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100) +
-  labs(x = "Date", y = "Number of stories", title = "Initial date distribution")
+  geom_histogram(bins = 100, fill = "dodgerblue") +
+  labs(x = "Date", y = "Number of stories", title = "Distribution of Creation Dates of Stories") +
+  theme_minimal()
 ```
 
 ![](Data-exploration_files/figure-gfm/initial-date-viz-1.png)<!-- -->
 
-We decided we wanted to look more closely at the dates in the latter
-half of 2018.
+Most of the stories seemed to be written in the latter half of 2018,
+therefore we should look more closely at these dates.
 
 ``` r
 data %>%
   filter(Date >= "2018-06-01") %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100) +
-  labs(x = "Date", y = "Number of stories", title = "Subset date distribution")
+  geom_histogram(bins = 100, fill = "dodgerblue") +
+  labs(x = "Date", y = "Number of stories", title = "Distribution of Creation Dates after June 2018") +
+  theme_minimal()
 ```
 
 ![](Data-exploration_files/figure-gfm/subset-date-viz-1.png)<!-- -->
 
-Here is a visualization of the most common words in the titles overall.
+The above data shows a cyclic weekly trend in the number of stories
+created each week.
+
+### Most Common Words
+
+Here is a visualization of the most common words in the stories’ titles
+overall.
 
 ``` r
 textFreq <- data %>%
@@ -69,13 +85,17 @@ textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFr
 textFreq %>%
   filter(n>= 75) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
+    geom_col(fill = "dodgerblue") +
+  labs(x = "Words", y = "Frequency", title = "Most Frequent Words in Titles") +
+  theme_minimal()
 ```
 
 ![](Data-exploration_files/figure-gfm/word-freq-viz-1.png)<!-- -->
 
-Here is a visualization of the most common words in summaries overall.
+“Office” appears to be the most common word in all document titles.
+
+Here is a visualization of the most common words in the summaries
+overall.
 
 ``` r
 textFreq <- data %>%
@@ -93,40 +113,20 @@ textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFr
 textFreq %>%
   filter(n>= 150) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Summaries")
+    geom_col(fill = "dodgerblue") +
+  labs(x = "Words", y = "Frequency", title = "Most Frequent Words in Summaries") +
+  theme_minimal()
 ```
 
 ![](Data-exploration_files/figure-gfm/word-freq-sum-1.png)<!-- -->
 
-Here we are sub-setting the data by countries.
+“Market” appears to be the most common word in the document summaries.
 
-``` r
-dataUSA <- subset(data, Country_USA == 1)
-dataGBR <- subset(data, Country_GBR == 1)
-dataCAN <- subset(data, Country_CAN == 1)
-
-dataUSA %>%
-  select(Title, Hits)
-```
-
-    ## # A tibble: 1,251 x 2
-    ##    Title                                                               Hits
-    ##    <chr>                                                              <int>
-    ##  1 Paramount Transportation Leases 136,000-SF Cheverly Facility           0
-    ##  2 Newmark Knight Frank Boosts National Appraisal Platform with Deal…    32
-    ##  3 Amazon Outgrows Seattle: Opens Search for Second HQ City in North…    71
-    ##  4 For Amazon’s Second HQ’s Search, Bigger May Be Better                601
-    ##  5 Last Call for Amazon HQ2: Today is Deadline for Communities to Su…  1379
-    ##  6 Hundreds of Localities Fortify Their Amazon HQ2 Bids with Hefty F…  1623
-    ##  7 Implications of a Tight Office Market and Amazon’s HQ2                27
-    ##  8 Amazon Narrows HQ2 Search to 20 Markets                             5149
-    ##  9 L.A. Officials ‘Thrilled’ by Amazon HQ2 Short List                   275
-    ## 10 Denver Makes Shortlist for Amazon HQ2                                134
-    ## # … with 1,241 more rows
+### Tags
 
 We decided to add up the number of tags each story had associated with
-it.
+it. This took a little bit of work because each tag had their own column
+with boolean values. They had to be gathered into a single column.
 
 ``` r
 # condenses tags into one tags column and their boolean into hasTag
@@ -167,7 +167,12 @@ data <- data %>%
 
     ## Joining, by = "StoryID"
 
-Here is a plot of the number of tags associated with a story and how
+Since tags are one of the main drivers of webpage hits, we thought it
+would be interesting to plot the number of tags each story has against
+the number of hits the story got. We hypothesized that more tags would
+lead to more hits on the story.
+
+Below is a plot of the number of tags associated with each story and how
 many hits it got.
 
 ``` r
@@ -175,16 +180,21 @@ many hits it got.
 data %>%
   select(Hits, numTags) %>%
   ggplot(aes(numTags)) + 
-  geom_bar(fill = "Blue") + 
+  geom_bar(fill = "dodgerblue") + 
   scale_x_continuous(name = "Number of tags", breaks = seq(0, 8, 1)) +
   scale_y_continuous(name = "Hit count") + 
   theme_minimal() + 
-  labs(title = "Number of Tags Correlated with Hit Count")
+  labs(title = "Number of Tags Correlated with Hit Count") 
 ```
 
 ![](Data-exploration_files/figure-gfm/tags_plots-1.png)<!-- -->
 
-We also decided to visualize the frequency of tags in general.
+As it turns out, stories with 2 tags received the most hits. This result
+is slightly unexpected.
+
+### Tag Frequency
+
+We also decided to visualize the top 10 most frequently occurring tags.
 
 ``` r
 tagPop <- allTags %>%
@@ -205,17 +215,23 @@ tagPop %>%
   arrange(desc(total)) %>%
   slice(0:10) %>%
   ggplot(aes(x = reorder(tags, -total), y = total)) +
-  geom_col(fill = "Blue") + 
+  geom_col(fill = "dodgerblue") + 
   scale_x_discrete(name = "Top 10 tags") +
-  scale_y_continuous(name = "# of stories with tag") + 
+  scale_y_continuous(name = "Number of occurances") + 
   theme_minimal() + 
   labs(title = "Top 10 Most Popular Tags")
 ```
 
 ![](Data-exploration_files/figure-gfm/tag-pop-viz-1.png)<!-- -->
 
-Here is a very basic multivariate linear regression model just for
-fun:’)
+The “National” tag seems to be the most popular.
+
+## Analysis
+
+### Modeling
+
+Below is a very basic multivariate linear regression model: most of tags
+are involved in the model except for a few very infrequent ones.
 
 ``` r
 data1 <- data %>%
@@ -251,7 +267,10 @@ glance(first_model)
     ## 1     0.475         0.469  242.      72.0 2.49e-246    25 -13344. 26740.
     ## # … with 3 more variables: BIC <dbl>, deviance <dbl>, df.residual <int>
 
-Here we also did a little sentiment analysis for fun :’’)
+### Sentiment Analysis
+
+Below is a simple sentiment analysis performed on the titles of the
+stories using the nrc lexicon.
 
 ``` r
 textDataFreq <- data %>%
@@ -270,8 +289,11 @@ textDataFreq$sentiment <- factor(textDataFreq$sentiment, levels = textDataFreq$s
 
 textDataFreq %>%
   ggplot(aes(x = sentiment, y = totSents)) +
-  geom_col() + 
-  labs(x = "sentiment", y = "frequency", title = "Frequency of sentiments associated with words in titles", subtitle = "Using the 'nrc' lexicon")
+  geom_col(fill = "dodgerblue") + 
+  labs(x = "sentiment", y = "frequency", title = "Frequency of Sentiments Associated with Words in Titles", subtitle = "Using the 'nrc' lexicon") + 
+  theme_minimal()
 ```
 
 ![](Data-exploration_files/figure-gfm/adding-sentiment-analysis-1.png)<!-- -->
+
+Most of the titles seem to be positive.

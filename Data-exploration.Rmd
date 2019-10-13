@@ -1,5 +1,5 @@
 ---
-title: "Initial data exploration"
+title: "CoStar Data Analysis"
 date: 10/12/19
 author: Yi Chen, Daniel Hwang, Margaret Reed
 output: github_document
@@ -24,13 +24,19 @@ data(stop_words)
 nrc <- get_sentiments("nrc")
 ```
 
+
+## Reading the Data
+
 ```{r import-data}
 data <- read.csv("data.csv") %>%
   as_tibble()
 ```
 
-We needed to clean the data a little. We did so by coding the date variable as a date using the lubridate package. We also did some reordering and converting of times for ease of analysis. 
-```{r datta-cleaning}
+
+## Preliminary Cleanup
+
+We needed to clean the data a little. We did so by coding the date variable as a date using the `lubridate` package. We also resorted and converted other values for ease of analysis. 
+```{r data-cleaning}
 data <- data %>%
   mutate(dateTime = ymd_hms(CreatedDate),
          Year = year(dateTime),
@@ -44,27 +50,35 @@ data <- data %>%
          Body = as.character(Body))
 ```
 
+## Visualizations
 
-Here is our first exploratory visualization, looking at the distribution of the dates each story was created. 
+### Distributions
+
+Below is our first visualization, showing the distribution of the creation dates of the stories. 
 ```{r initial-date-viz}
 data %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100) +
-  labs(x = "Date", y = "Number of stories", title = "Initial date distribution")
+  geom_histogram(bins = 100, fill = "dodgerblue") +
+  labs(x = "Date", y = "Number of stories", title = "Distribution of Creation Dates of Stories") +
+  theme_minimal()
 ```
 
-We decided we wanted to look more closely at the dates in the latter half of 2018.
+Most of the stories seemed to be written in the latter half of 2018, therefore we should look more closely at these dates.
 
 ```{r subset-date-viz}
 data %>%
   filter(Date >= "2018-06-01") %>%
   ggplot(aes(x = Date)) +
-  geom_histogram(bins = 100) +
-  labs(x = "Date", y = "Number of stories", title = "Subset date distribution")
+  geom_histogram(bins = 100, fill = "dodgerblue") +
+  labs(x = "Date", y = "Number of stories", title = "Distribution of Creation Dates after June 2018") +
+  theme_minimal()
 ```
 
+The above data shows a cyclic weekly trend in the number of stories created each week. 
 
-Here is a visualization of the most common words in the titles overall. 
+### Most Common Words
+
+Here is a visualization of the most common words in the stories' titles overall. 
 
 ```{r word-freq-viz}
 textFreq <- data %>%
@@ -78,11 +92,15 @@ textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFr
 textFreq %>%
   filter(n>= 75) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Titles")
+    geom_col(fill = "dodgerblue") +
+  labs(x = "Words", y = "Frequency", title = "Most Frequent Words in Titles") +
+  theme_minimal()
 ```
 
-Here is a visualization of the most common words in summaries overall. 
+"Office" appears to be the most common word in all document titles. 
+
+
+Here is a visualization of the most common words in the summaries overall. 
 ```{r word-freq-sum}
 textFreq <- data %>%
   select(Date, Summary, StoryID) %>%
@@ -95,23 +113,17 @@ textFreq$word <- factor(textFreq$word, levels = textFreq$word[order(desc((textFr
 textFreq %>%
   filter(n>= 150) %>%
   ggplot(aes(x = word, y = n)) +
-    geom_col() +
-  labs(x = "Words", y = "Frequency", title = "Most frequent words in Summaries")
+    geom_col(fill = "dodgerblue") +
+  labs(x = "Words", y = "Frequency", title = "Most Frequent Words in Summaries") +
+  theme_minimal()
 ```
 
-Here we are sub-setting the data by countries.
-```{r countrySplit}
-dataUSA <- subset(data, Country_USA == 1)
-dataGBR <- subset(data, Country_GBR == 1)
-dataCAN <- subset(data, Country_CAN == 1)
+"Market" appears to be the most common word in the document summaries. 
 
-dataUSA %>%
-  select(Title, Hits)
+### Tags
 
-```
+We decided to add up the number of tags each story had associated with it. This took a little bit of work because each tag had their own column with boolean values. They had to be gathered into a single column. 
 
-
-We decided to add up the number of tags each story had associated with it. 
 ```{r tags_data}
 # condenses tags into one tags column and their boolean into hasTag
 allTags <- gather(data, "tags", "hasTag", 13:35) 
@@ -137,22 +149,27 @@ data <- data %>%
   full_join(tagCounts)
 ```
 
+Since tags are one of the main drivers of webpage hits, we thought it would be interesting to plot the number of tags each story has against the number of hits the story got. We hypothesized that more tags would lead to more hits on the story. 
 
-Here is a plot of the number of tags associated with a story and how many hits it got. 
+Below is a plot of the number of tags associated with each story and how many hits it got. 
 ```{r tags_plots}
 # correlating number of tags with hit count
 data %>%
   select(Hits, numTags) %>%
   ggplot(aes(numTags)) + 
-  geom_bar(fill = "Blue") + 
+  geom_bar(fill = "dodgerblue") + 
   scale_x_continuous(name = "Number of tags", breaks = seq(0, 8, 1)) +
   scale_y_continuous(name = "Hit count") + 
   theme_minimal() + 
-  labs(title = "Number of Tags Correlated with Hit Count")
+  labs(title = "Number of Tags Correlated with Hit Count") 
 ```
 
-We also decided to visualize the frequency of tags in general.
-```{r tag-pop-viz}
+As it turns out, stories with 2 tags received the most hits. This result is slightly unexpected. 
+
+### Tag Frequency
+
+We also decided to visualize the top 10 most frequently occurring tags. 
+```{r tag-pop-viz, fig.width=10}
 
 tagPop <- allTags %>%
   count(tags, hasTag) 
@@ -172,16 +189,21 @@ tagPop %>%
   arrange(desc(total)) %>%
   slice(0:10) %>%
   ggplot(aes(x = reorder(tags, -total), y = total)) +
-  geom_col(fill = "Blue") + 
+  geom_col(fill = "dodgerblue") + 
   scale_x_discrete(name = "Top 10 tags") +
-  scale_y_continuous(name = "# of stories with tag") + 
+  scale_y_continuous(name = "Number of occurances") + 
   theme_minimal() + 
   labs(title = "Top 10 Most Popular Tags")
 ```
 
+The "National" tag seems to be the most popular. 
 
+## Analysis
 
-Here is a very basic multivariate linear regression model just for fun:')
+### Modeling
+
+Below is a very basic multivariate linear regression model: most of tags are involved in the model except for a few very infrequent ones. 
+
 ```{r model}
 data1 <- data %>%
   drop_na()
@@ -192,7 +214,10 @@ tidy(first_model)
 glance(first_model)
 ```
 
-Here we also did a little sentiment analysis for fun :'')
+
+### Sentiment Analysis
+
+Below is a simple sentiment analysis performed on the titles of the stories using the nrc lexicon. 
 
 ```{r adding-sentiment-analysis}
 textDataFreq <- data %>%
@@ -207,10 +232,12 @@ textDataFreq$sentiment <- factor(textDataFreq$sentiment, levels = textDataFreq$s
 
 textDataFreq %>%
   ggplot(aes(x = sentiment, y = totSents)) +
-  geom_col() + 
-  labs(x = "sentiment", y = "frequency", title = "Frequency of sentiments associated with words in titles", subtitle = "Using the 'nrc' lexicon")
+  geom_col(fill = "dodgerblue") + 
+  labs(x = "sentiment", y = "frequency", title = "Frequency of Sentiments Associated with Words in Titles", subtitle = "Using the 'nrc' lexicon") + 
+  theme_minimal()
 ```
 
+Most of the titles seem to be positive. 
 
 
 
